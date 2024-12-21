@@ -1,9 +1,11 @@
-from requests import get
 from json import loads
-from sys import argv
 from re import compile
-from basemod import BaseModule
+
 import urllib3
+from requests import get
+
+from basemod import BaseModule
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -17,16 +19,6 @@ def color_state(state):
             return "\033[0;31mN/A\033[0m"
         case _:
             return state
-
-
-# headers = {
-#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiZDUzOTQ0Yzg5YjE0ZjgxYjg2MTBlNGE5NDJiZjE1OSIsImlhdCI6MTcwMjkwMDg4NywiZXhwIjoyMDE4MjYwODg3fQ.usCnaZQ7kMXxJPaxN73X2AXTtqYMCVx-vQ7UvXwUyas",
-#     "content-type": "application/json",
-# }
-
-# url = "https://192.168.1.5:8123/api/states"
-
-
 
 class HomeAssistant(BaseModule):
     def __init__(self, *, host, token, filters:list[str], port=8123, scheme='https', **kwargs):

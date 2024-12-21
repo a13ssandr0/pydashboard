@@ -1,13 +1,14 @@
 import curses
 from argparse import ArgumentParser
+from importlib import import_module, invalidate_caches, reload
 from pathlib import Path
 from threading import Thread
-from typing import Any, NamedTuple, cast
-import yaml
-from watchfiles import run_process
 from time import sleep
-from importlib import import_module, invalidate_caches, reload
+from typing import Any, NamedTuple, cast
+
+import yaml
 from durations import Duration
+from watchfiles import run_process
 
 from basemod import BaseModule, ErrorModule
 

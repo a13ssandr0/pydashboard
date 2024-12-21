@@ -63,7 +63,6 @@ class BaseModule():
                 self.win.addstr(str(self.__run__()))
             except error:
                 pass
-            # self.win.refresh()
             sleep(self.refresh)
             
     @property
