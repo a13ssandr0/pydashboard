@@ -2,31 +2,53 @@ import curses
 from argparse import ArgumentParser
 from pathlib import Path
 from threading import Thread
-from typing import NamedTuple
+from typing import Any, NamedTuple, cast
 import yaml
 from watchfiles import run_process
 from time import sleep
-from importlib import import_module, invalidate_caches
+from importlib import import_module, invalidate_caches, reload
+from durations import Duration
 
-from basemod import BaseModule
+from basemod import BaseModule, ErrorModule
 
 Coordinates = NamedTuple('Coordinates', [
     ('h', int), ('w', int), ('y', int), ('x', int),
 ])
 threads:list[Thread] = []
-
+imported_modules = set()
 
 def main(scr: curses.window, config: dict):
-    invalidate_caches()
     scr.clear()
     curses.curs_set(0)
     # curses.start_color()
-    # curses.init_pair(1, curses.COLOR_RED, curses.COLOR_WHITE)
-
-    windows:list[curses.window] = []
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i, i, -1)
     
-    for key, conf in config['mods'].items(): 
+    windows:list[tuple[curses.window, int, int, int, int]] = []
+    
+    defaults = cast(dict[str, Any], config.get('defaults'))
+    # grid_c = cast(list[int], config.get('grid', {'columns': None}).get('columns'))
+    # grid_r = cast(list[int], config.get('grid', {'rows': None}).get('rows'))
+    
+    for key, conf in cast(dict[str,dict[str,Any]], config['mods']).items():
+        if not conf.get('enabled', True): continue
+        
+        for k, v in defaults.items():
+            conf.setdefault(k ,v)
+        
         mod = conf.get('type', key)
+        
+        if isinstance(conf.get('refreshInterval'), str):
+            conf['refreshInterval'] = round(Duration(conf['refreshInterval']).to_seconds())
+        
+        if 'position' in conf:
+            conf['window'] = {
+                'y': sum(config['grid']['rows'][:conf['position']['top']]),
+                'x': sum(config['grid']['columns'][:conf['position']['left']]),
+                'h': sum(config['grid']['rows'][conf['position']['top']:conf['position']['top']+conf['position']['height']]),
+                'w': sum(config['grid']['columns'][conf['position']['left']:conf['position']['left']+conf['position']['width']]),
+            }
         
         coords = Coordinates(conf['window']['h'], conf['window']['w'], conf['window'].get('y', 0), conf['window'].get('x', 0))
         
@@ -37,18 +59,31 @@ def main(scr: curses.window, config: dict):
         # that's not a bug, that's a feature, but we have to make sure the 
         # border value is always positive
         offset = abs(int(conf.get('border', True)))
-        win = curses.newwin(coords.h-(2*offset), coords.w-(2*offset), coords.y+offset, coords.x+offset)
+        conf['border'] = not not offset
         
-        widget:BaseModule = import_module('modules.'+mod).widget(out_win=out_win, win=win, **conf)
+        win = curses.newpad(100, 100)
         
-        threads.append(t:=Thread(target=widget, name=widget.title or key))
-        t.start()
-        windows.append(out_win)
-        windows.append(win)
+        try:
+            m = import_module('modules.'+mod)
+            imported_modules.add(m)
+            widget:BaseModule = m.widget(out_win=out_win, win=win, **conf)
+            
+            threads.append(t:=Thread(target=widget, name=widget.title or key))
+            t.start()
+        except (ModuleNotFoundError, AttributeError):
+            ErrorModule(out_win=out_win, win=win, **conf)(f"Module '{mod}' not found")
+        finally:
+            windows.append((out_win, coords.h, coords.w, coords.y, coords.x))
+            windows.append((win, coords.y+coords.h-offset-1, coords.x+coords.w-offset-1, coords.y+offset, coords.x+offset))
+            
         
     def upd_win(windows:list[curses.window]):
         while True:
-            for w in windows: w.refresh()
+            for win, h, w, y, x in windows:
+                try:
+                    win.refresh()
+                except:
+                    cast(curses.window, win).refresh( 0,0, y,x, h,w)
             sleep(.5)
     
     threads.append(t:=Thread(target=upd_win, args=(windows,), name='refresh'))
@@ -73,6 +108,9 @@ def reload_handler():
     with open(args.config) as file:
         config = yaml.safe_load(file)
 
+    invalidate_caches()
+    for m in imported_modules: reload(m)
+
     try:
         curses.wrapper(main, config)
     except KeyboardInterrupt:
@@ -83,7 +121,7 @@ def reload_handler():
 if __name__ == "__main__":
     run_process(
         args.config,
-        # __file__,
+        __file__,
         Path(__file__).parent/'modules',
         Path(__file__).parent/'basemod.py',
         target=reload_handler)

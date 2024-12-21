@@ -11,6 +11,14 @@
             "program": "${workspaceFolder}/pydashboard.py",
             "args": ["${workspaceFolder}/config.yml"],
             "console": "externalTerminal"
+        },
+        {
+            "name": "Debug2",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/pydashboard2.py",
+            "args": ["${workspaceFolder}/config.yml"],
+            "console": "externalTerminal"
         }
     ]
 }

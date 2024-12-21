@@ -1,2 +1,5 @@
 py-term
 pyyaml
+durations
+requests
+textual
