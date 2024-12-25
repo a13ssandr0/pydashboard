@@ -35,7 +35,10 @@ class HomeAssistant(BaseModule):
         super().__init__(**kwargs)
         
     def __run__(self):
-        states_dict = sorted(loads(get(self.url, headers=self.headers, verify=False).text), key = lambda o: o["entity_id"])
+        try:
+            states_dict = sorted(loads(get(self.url, headers=self.headers, verify=False).text), key = lambda o: o["entity_id"])
+        except ConnectionError as e:
+            return e.strerror
 
         out_str = ""
 
@@ -68,7 +71,7 @@ class HomeAssistant(BaseModule):
                     ent_dict[fname] = [state]
 
             for fname, states in ent_dict.items():
-                out_str += f"{fname:<{w}}{'  '.join(states)}"
+                out_str += f"{fname:<{w}}{'  '.join(states)}\n"
 
         return out_str
 

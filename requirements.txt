@@ -2,3 +2,5 @@ py-term
 pyyaml
 durations
 requests
+octorest
+stransi

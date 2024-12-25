@@ -1,22 +1,29 @@
 from curses import window, error
 import curses
 from time import sleep
+from stransi import Ansi, Escape
 
 _colors = {
     None:       -1,
-    'black':    curses.COLOR_BLACK,
-    'blue':     curses.COLOR_BLUE,
-    'cyan':     curses.COLOR_CYAN,
-    'green':    curses.COLOR_GREEN,
-    'magenta':  curses.COLOR_MAGENTA,
-    'red':      curses.COLOR_RED,
-    'white':    curses.COLOR_WHITE,
-    'yellow':   curses.COLOR_YELLOW,
+    'black':    curses.COLOR_BLACK<<8,
+    'blue':     curses.COLOR_BLUE<<8,
+    'cyan':     curses.COLOR_CYAN<<8,
+    'green':    curses.COLOR_GREEN<<8,
+    'magenta':  curses.COLOR_MAGENTA<<8,
+    'red':      curses.COLOR_RED<<8,
+    'white':    curses.COLOR_WHITE<<8,
+    'yellow':   curses.COLOR_YELLOW<<8,
 }
 
 def colors(color=None):
-    return curses.color_pair(_colors[color])
+    # return curses.color_pair(_colors[color])
+    return curses.A_BOLD | _colors[color] | curses.COLOR_MAGENTA
 
+
+def parse_str(text):
+    text = str(text)
+    text = ''.join([s for s in Ansi(text).escapes() if not isinstance(s, Escape)])
+    return text
 
 
 class BaseModule():
@@ -58,9 +65,10 @@ class BaseModule():
         
     def __call__(self):
         while True:
+            text = parse_str(self.__run__())            
             self.win.clear()
             try:
-                self.win.addstr(str(self.__run__()))
+                self.win.addstr(text)
             except error:
                 pass
             sleep(self.refresh)

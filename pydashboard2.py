@@ -1,39 +1,43 @@
-#!/usr/bin/env python
-"""
-A simple cmd-line tool for displaying FormattingString capabilities.
-
-For example:
-
-$ python tprint.py bold A rather bold statement.
-"""
-# std
-from __future__ import print_function
-
-# std imports
-import argparse
-
-# local
-from blessed import Terminal
+from datetime import datetime
+from textual.app import App, ComposeResult
+from textual.widgets import Footer, Static, Digits
 
 
-def parse_args():
-    """Parse sys.argv, returning dict suitable for main()."""
-    parser = argparse.ArgumentParser(
-        description='displays argument as specified style')
-
-    parser.add_argument('style', type=str, help='style formatter')
-    parser.add_argument('text', type=str, nargs='+')
-
-    return dict(parser.parse_args(['bold'])._get_kwargs())
-
-
-def main(style, text):
-    """Program entry point."""
-    term = Terminal()
-    style = getattr(term, style)
-    print("\033[0;32mON \033[0m")
+class TimeDisplay(Digits):
+    """A widget to display elapsed time."""
+    # def compose(self):
+    #     # self.styles.border = ("round", "blue")
+    #     # self.styles.width = "auto"
+    #     # self.styles.position = "absolute"
+    #     # self.styles.offset = 5, 5
+    #     yield from super().compose()
 
 
-if __name__ == '__main__':
-    main('bold', 'a rather bold statement')
-    input()
+class StopwatchApp(App):
+    DEFAULT_CSS = """
+        Widget Widget {
+            border: round white;
+            width: auto;
+            position: absolute;
+        }
+    """
+    
+    def compose(self) -> ComposeResult:
+        """Create child widgets for the app."""
+        # yield Header()
+        # yield Footer()
+        yield TimeDisplay('00:00:00')
+        yield Static("I see a \033[1;31mred\033[;39m door, and I want it painted \033[1;30mblack\033[;39m Ciao")
+
+    def on_ready(self) -> None:
+        self.update_clock()
+        self.set_interval(1, self.update_clock)
+
+    def update_clock(self) -> None:
+        clock = datetime.now().time()
+        self.query_one(Digits).update(f"{clock:%H:%M:%S}")
+
+
+if __name__ == "__main__":
+    app = StopwatchApp()
+    app.run()

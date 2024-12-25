@@ -23,8 +23,9 @@ def main(scr: curses.window, config: dict):
     curses.curs_set(0)
     # curses.start_color()
     curses.use_default_colors()
+    # for j in range (0, curses.COLORS):
     for i in range(0, curses.COLORS):
-        curses.init_pair(i, i, -1)
+        curses.init_pair(i, i, curses.COLOR_WHITE)
     
     windows:list[tuple[curses.window, int, int, int, int]] = []
     
@@ -82,9 +83,10 @@ def main(scr: curses.window, config: dict):
         while True:
             for win, h, w, y, x in windows:
                 try:
-                    win.refresh()
+                    win.noutrefresh()
                 except:
-                    cast(curses.window, win).refresh( 0,0, y,x, h,w)
+                    cast(curses.window, win).noutrefresh( 0,0, y,x, h,w)
+            curses.doupdate()
             sleep(.5)
     
     threads.append(t:=Thread(target=upd_win, args=(windows,), name='refresh'))
