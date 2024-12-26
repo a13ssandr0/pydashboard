@@ -6,3 +6,5 @@ octorest
 stransi
 psutil
 pandas
+libvirt-python
+feedparser

@@ -5,7 +5,7 @@ from helpers.strings import ljust
 
 def mktable(table:DataFrame, humanize:dict[str,callable]=None, 
             column_names:dict[str,str]=None,
-            justify:dict[str,callable]=None, colorize:dict[str,callable]=None,
+            justify:dict[str,callable]={}, colorize:dict[str,callable]=None,
             sortby:list[str]=None, reverse:list[bool]=None, print_header=True,
             select_columns:str|list[str]=None):
     

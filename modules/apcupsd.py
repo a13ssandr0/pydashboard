@@ -32,7 +32,7 @@ class APCUPSd(BaseModule):
         status = self.get()
         
         if self.__model_as_title:
-            self.title = status['MODEL']
+            self.border_title = status['MODEL']
 
         # status['STATUS']   = status['STATUS']
         status['LINEV']    = status['LINEV'].removesuffix('.0')

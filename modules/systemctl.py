@@ -2,10 +2,10 @@ import json
 import re
 import subprocess
 from os.path import splitext
-from sys import argv
 
 import libvirt
-import argparse
+
+from basemod import BaseModule
 
 
 def do_docker():
@@ -26,20 +26,20 @@ def do_docker():
         if l>max_len: max_len=l
 
     color_state = {
-        'created':    '\033[0;32mcreated\033[0m',    #green
-        'restarting': '\033[0;93mrestarting\033[0m', #yellow
-        'running':    '\033[0;92mrunning\033[0m',    #lime
-        'removing':   '\033[0;93mremoving\033[0m',   #yellow
-        'paused':     '\033[0;93mpaused\033[0m',     #yellow
-        'exited':     '\033[0;31mexited\033[0m',     #red
-        'dead':       '\033[0;31mdead\033[0m',       #red
+        'created':    '[green]created[/green]',    #green
+        'restarting': '[yellow]restarting[/yellow]', #yellow
+        'running':    '[lime]running[/lime]',    #lime
+        'removing':   '[yellow]removing[/yellow]',   #yellow
+        'paused':     '[yellow]paused[/yellow]',     #yellow
+        'exited':     '[red]exited[/red]',     #red
+        'dead':       '[red]dead[/red]',       #red
     }
 
 
     docker_info = '''\
-Containers: {cont:>3}   Running: \033[0;32m{runn:>3}\033[0m
- Images:    {imgs:>3}   Paused:  \033[0;93m{paus:>3}\033[0m
- Volumes:   {vols:>3}   Stopped: \033[0;31m{stop:>3}\033[0m
+Containers: {cont:>3}   Running: [green]{runn:>3}[/green]
+ Images:    {imgs:>3}   Paused:  [yellow]{paus:>3}[/yellow]
+ Volumes:   {vols:>3}   Stopped: [red]{stop:>3}[/red]
 Disk usage:       Containers: {cont_spc}
  Images: {imgs_spc:<8} Volumes:    {vols_spc}
 '''.format_map(dict(
@@ -56,14 +56,14 @@ Disk usage:       Containers: {cont_spc}
 
 def do_libvirt(hypervisor:str):
     state_map = {
-        libvirt.VIR_DOMAIN_NOSTATE:     '\033[0;97mnostate\033[0m',
-        libvirt.VIR_DOMAIN_RUNNING:     '\033[0;92mrunning\033[0m',
-        libvirt.VIR_DOMAIN_BLOCKED:     '\033[0;35mblocked\033[0m',
-        libvirt.VIR_DOMAIN_PAUSED:      '\033[0;93mpaused\033[0m',
-        libvirt.VIR_DOMAIN_SHUTDOWN:    '\033[0;31mshutdown\033[0m',
-        libvirt.VIR_DOMAIN_SHUTOFF:     '\033[0;31mshutoff\033[0m',
-        libvirt.VIR_DOMAIN_CRASHED:     '\033[0;41mcrashed\033[0m',
-        libvirt.VIR_DOMAIN_PMSUSPENDED: '\033[0;93mpmsuspended\033[0m',
+        libvirt.VIR_DOMAIN_NOSTATE:     '[white]mnostate[/white]',
+        libvirt.VIR_DOMAIN_RUNNING:     '[lightgreen]running[/lightgreen]',
+        libvirt.VIR_DOMAIN_BLOCKED:     '[magenta]blocked[/magenta]',
+        libvirt.VIR_DOMAIN_PAUSED:      '[lightmagenta]paused[/lightmagenta]',
+        libvirt.VIR_DOMAIN_SHUTDOWN:    '[red]shutdown[/red]',
+        libvirt.VIR_DOMAIN_SHUTOFF:     '[red]shutoff[/red]',
+        libvirt.VIR_DOMAIN_CRASHED:     '[white on red]crashed[/white on red]',
+        libvirt.VIR_DOMAIN_PMSUSPENDED: '[lightmagenta]pmsuspended[/lightmagenta]',
     }
 
     with libvirt.open(hypervisor) as conn:
@@ -77,7 +77,7 @@ def do_libvirt(hypervisor:str):
 
     libvirt_info = ''
     for dom in states:
-        libvirt_info += dom[0].ljust(max_len)+' '+state_map.get(dom[1], '\033[0;93munknown\033[0m')+'\n'
+        libvirt_info += dom[0].ljust(max_len)+' '+state_map.get(dom[1], '[/lightyellow]unknown[lightyellow]')+'\n'
     
     return libvirt_info
         
@@ -89,11 +89,11 @@ def sysctl_states_map(status):
     reds = ['abandoned', 'bad', 'bad-setting', 'dead', 'dead-before-auto-restart', 'dead-resources-pinned', 'error', 'failed', 'failed-before-auto-restart', 'not-found']
     
     if status in greens:
-        return f'\033[0;92m{status}\033[0m'
+        return f'[lightgreen]{status}[/lightgreen]'
     elif status in yellows:
-        return f'\033[0;93m{status}\033[0m'
+        return f'[lightyellow]{status}[/lightyellow]'
     elif status in reds:
-        return f'\033[0;31m{status}\033[0m'
+        return f'[red]{status}[/red]'
     else:
         return status
     
@@ -103,7 +103,7 @@ def do_sysctl(*units:str):
     if units:
         my_units += subprocess.run(['systemctl', 'list-units', '--all', '--quiet', '--plain', *units], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode()
     
-    my_units = [u.split(' ', 4) for u in re.sub('  *', ' ', my_units).strip().split('\n')]
+    my_units = [u.split(' ', 4) for u in re.sub('  *', ' ', my_units).strip().split('\n') if u]
     max_len = 15
     for u in my_units:
         u[0] = splitext(u[0])[0]
@@ -111,25 +111,34 @@ def do_sysctl(*units:str):
         if l>max_len: max_len=l
         
     sysctl_info = ''
-    _ = []
+    seen_units = []
     for u in my_units:
-        if u[0] not in _:
+        if u[0] not in seen_units:
             sysctl_info += u[0].ljust(max_len)+' '+sysctl_states_map(u[3])+'\n'
-            _.append(u[0])
+            seen_units.append(u[0])
         
     return sysctl_info
     
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-d', '--domain')
-parser.add_argument('-u', '--units', nargs='*', default=[])
-args = parser.parse_args()
+class Systemctl(BaseModule):
 
+    def __init__(self, *, units:list[str]=[], domain:str=None, **kwargs):
+        self.units=units
+        self.domain=domain
+        super().__init__(**kwargs)
 
-# print('\033[0;31mServices:\033[0m')
-print(do_sysctl(*args.units))
-if args.domain:
-    print('\033[0;31mVMs:\033[0m')
-    print(do_libvirt(args.domain))
-print('\033[0;31mDocker containers:\033[0m')
-print(do_docker())
+    def __call__(self):
+        out = ""
+        # out += '[red]Services:[/red]' + '\n'
+        out += do_sysctl(*self.units) + '\n'
+        if self.domain:
+            out += '[red]VMs:[/red]' + '\n'
+            out += do_libvirt(self.domain) + '\n'
+        out += '[red]Docker containers:[/red]' + '\n'
+        try:
+            out += do_docker() + '\n'
+        except FileNotFoundError:
+            out += '[yellow]Docker not installed[/yellow]'
+        return out
+
+widget = Systemctl
