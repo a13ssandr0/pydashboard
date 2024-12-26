@@ -4,10 +4,12 @@ from time import sleep
 from typing import Literal
 from stransi import Ansi, Escape
 from textual.widgets import Static
+from textual.containers import ScrollableContainer
 from durations import Duration
+import os
 
 
-class BaseModule(Static):
+class BaseModule(ScrollableContainer):
     
     # def __init_subclass__(cls) -> None:
     #     cls.__init__.__kwdefaults__['title'] = cls.__name__
@@ -53,17 +55,22 @@ class BaseModule(Static):
         # self._title_color = title_color
         # self.__do_border_title__()
         
-    def __call__(self):
+    def __call__(self) -> str:
         """Method called each time the module has to be updated"""
         raise NotImplementedError('Stub')
     
     def update(self):
-        super().update(self())
+        self.inner.update('\n'.join([l+(' '*os.get_terminal_size().columns) for l in str(self()).splitlines()]))
     
     def compose(self):
+        self.inner = Static()
+        self.inner.styles.width = "auto"
+        self.inner.styles.height = "auto"
+        # self.inner.styles.overflow_x = "hidden"
+        # self.inner.styles.overflow_y = "hidden"
         self.update()
         self.set_interval(self.refreshInterval, self.update)
-        yield from super().compose()
+        yield self.inner
         
     # def __do_border_title__(self):
     #     title = ' ' + self._title[:self.out_win.getmaxyx()[1]].strip() + ' '

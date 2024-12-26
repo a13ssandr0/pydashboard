@@ -13,6 +13,7 @@ from watchfiles import run_process
 from basemod import BaseModule, ErrorModule
 
 from textual.app import App
+from textual.containers import ScrollableContainer
 
 
 Coordinates = NamedTuple('Coordinates', [
@@ -103,6 +104,11 @@ def main(scr: curses.window, config: dict):
         
         
 class MainApp(App):
+    CSS = """
+        Screen {
+            overflow: hidden hidden;
+        }
+    """
     def compose(self):
         with open(self.config) as file:
             config = yaml.safe_load(file)
@@ -137,9 +143,15 @@ class MainApp(App):
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
                 widget:BaseModule = m.widget(**conf)
-            except (ModuleNotFoundError, AttributeError):
-                widget = ErrorModule(f"Module '{mod}' not found")
+            except (ModuleNotFoundError, AttributeError) as e:
+                widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             
+            
+            
+            # widget = VerticalScroll(widget)
+            # widget.styles.overflow_y = "hidden"
+            
+            # widget = ScrollableContainer(widget)
             widget.styles.offset = (coords.x, coords.y)
             widget.styles.width = coords.w
             widget.styles.height = coords.h

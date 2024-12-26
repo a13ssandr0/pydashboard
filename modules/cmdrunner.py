@@ -8,7 +8,7 @@ class CmdRunner(BaseModule):
         self.stderr_pipe=STDOUT if pipe_stderr else None
         super().__init__(**kwargs)
         
-    def __run__(self):
+    def __call__(self):
         return run(args=self.args, stdout=self.stdout_pipe, stderr=self.stderr_pipe).stdout.decode()
     
 widget = CmdRunner

@@ -12,11 +12,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def color_state(state):
     match state.lower():
         case "on":
-            return "\033[0;32mON \033[0m"
+            return "[green]ON [/green]" #"\033[0;32mON \033[0m"
         case "off":
-            return "\033[0;34mOFF\033[0m"
+            return "[blue]OFF[/blue]" #"\033[0;34mOFF\033[0m"
         case "unavailable":
-            return "\033[0;31mN/A\033[0m"
+            return "[red]N/A[/red]" #"\033[0;31mN/A\033[0m"
         case _:
             return state
 
@@ -34,7 +34,7 @@ class HomeAssistant(BaseModule):
         }
         super().__init__(**kwargs)
         
-    def __run__(self):
+    def __call__(self):
         try:
             states_dict = sorted(loads(get(self.url, headers=self.headers, verify=False).text), key = lambda o: o["entity_id"])
         except ConnectionError as e:

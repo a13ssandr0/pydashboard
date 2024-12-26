@@ -4,3 +4,5 @@ durations
 requests
 octorest
 stransi
+psutil
+pandas
