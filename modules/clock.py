@@ -7,7 +7,7 @@ class Clock(BaseModule):
         self.format=format
         super().__init__(**kwargs)
         
-    def __run__(self):
+    def __call__(self):
         return datetime.now().strftime(self.format)
     
 widget = Clock

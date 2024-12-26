@@ -28,7 +28,7 @@ class APCUPSd(BaseModule):
         self.__model_as_title = title is None
         super().__init__(title=title, **kwargs)
         
-    def __run__(self):
+    def __call__(self):
         status = self.get()
         
         if self.__model_as_title:

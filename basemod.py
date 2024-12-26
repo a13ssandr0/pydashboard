@@ -1,126 +1,143 @@
 from curses import window, error
 import curses
 from time import sleep
+from typing import Literal
 from stransi import Ansi, Escape
-
-_colors = {
-    None:       -1,
-    'black':    curses.COLOR_BLACK<<8,
-    'blue':     curses.COLOR_BLUE<<8,
-    'cyan':     curses.COLOR_CYAN<<8,
-    'green':    curses.COLOR_GREEN<<8,
-    'magenta':  curses.COLOR_MAGENTA<<8,
-    'red':      curses.COLOR_RED<<8,
-    'white':    curses.COLOR_WHITE<<8,
-    'yellow':   curses.COLOR_YELLOW<<8,
-}
-
-def colors(color=None):
-    # return curses.color_pair(_colors[color])
-    return curses.A_BOLD | _colors[color] | curses.COLOR_MAGENTA
+from textual.widgets import Static
+from durations import Duration
 
 
-def parse_str(text):
-    text = str(text)
-    text = ''.join([s for s in Ansi(text).escapes() if not isinstance(s, Escape)])
-    return text
-
-
-class BaseModule():
+class BaseModule(Static):
     
     # def __init_subclass__(cls) -> None:
-    #     cls.__init__.__defaults__
+    #     cls.__init__.__kwdefaults__['title'] = cls.__name__
     
-    def __init__(self, *, out_win:window, win:window, 
-                 refreshInterval:int=None, 
-                 border=True, border_color:str=None, 
-                 title:str=None, title_color:str=None, **kwargs):
+    def __init__(self, *,
+                 refreshInterval:int|float|str=None, 
+                 border=("round", "white"),
+                 title:str=None,
+                 title_align:Literal['left','center','right']="center",
+                 title_background:str=None,
+                 title_color:str="white",
+                 title_style:str=None,
+                 subtitle:str=None,
+                 subtitle_align:Literal['left','center','right']="center",
+                 subtitle_background:str=None,
+                 subtitle_color:str="white",
+                 subtitle_style:str=None,
+                 id:str=None,
+                 **kwargs):
         """Init module and load config"""
-        self.out_win = out_win
-        self.win = win
-        self.refresh = refreshInterval
-        self._border = border
-        self._border_color = border_color
-        if title is None: title=self.__class__.__name__
-        self._title = title
-        self._title_color = title_color
-        self.__do_border_title__()
+        super().__init__(id=id)
         
-    def __run__(self):
-        """Method called each time the module has to be updated"""
-        raise NotImplementedError('Stub')
+        if isinstance(refreshInterval, str):
+            refreshInterval = Duration(refreshInterval).to_seconds()
+        self.refreshInterval = refreshInterval
         
-    def __do_border_title__(self):
-        title = ' ' + self._title[:self.out_win.getmaxyx()[1]].strip() + ' '
-        self.out_win.clear()
-        
-        if self._border == True:
-            self.out_win.attrset(colors(self._border_color))
-            self.out_win.box()
-            self.out_win.attrset(-1)
-        
-        if title.strip():
-            self.out_win.addstr(0, (self.out_win.getmaxyx()[1]-len(title))//2, title, colors(self._title_color))
-        
+        if border:
+            self.styles.border = border or "none"
+            self.border_title = title if title is not None else self.__class__.__name__
+            self.styles.border_title_align = title_align
+            self.styles.border_title_background = title_background
+            self.styles.border_title_color = title_color
+            self.styles.border_title_style = title_style
+            self.border_subtitle = subtitle
+            self.styles.border_subtitle_align = subtitle_align
+            self.styles.border_subtitle_background = subtitle_background
+            self.styles.border_subtitle_color = subtitle_color
+            self.styles.border_subtitle_style = subtitle_style
+            
+            
+        # if title is None: title=self.__class__.__name__
+        # self._title = title
+        # self._title_color = title_color
+        # self.__do_border_title__()
         
     def __call__(self):
-        while True:
-            text = parse_str(self.__run__())            
-            self.win.clear()
-            try:
-                self.win.addstr(text)
-            except error:
-                pass
-            sleep(self.refresh)
-            
-    @property
-    def border(self):
-        return self._border
+        """Method called each time the module has to be updated"""
+        raise NotImplementedError('Stub')
     
-    @border.setter
-    def border(self, border):
-        self._border = border
-        self.__do_border_title__()
-            
-    @property
-    def border_color(self):
-        return self._border_color
+    def update(self):
+        super().update(self())
     
-    @border_color.setter
-    def border_color(self, border_color):
-        self._border_color = border_color
-        self.__do_border_title__()
+    def compose(self):
+        self.update()
+        self.set_interval(self.refreshInterval, self.update)
+        yield from super().compose()
         
-    @property
-    def title(self):
-        return self._title
-    
-    @title.setter
-    def title(self, title):
-        self._title = title
-        self.__do_border_title__()
+    # def __do_border_title__(self):
+    #     title = ' ' + self._title[:self.out_win.getmaxyx()[1]].strip() + ' '
+    #     self.out_win.clear()
         
-    @property
-    def title_color(self):
-        return self._title_color
+    #     if self._border == True:
+    #         self.out_win.attrset(colors(self._border_color))
+    #         self.out_win.box()
+    #         self.out_win.attrset(-1)
+        
+    #     if title.strip():
+    #         self.out_win.addstr(0, (self.out_win.getmaxyx()[1]-len(title))//2, title, colors(self._title_color))
+        
+        
+    # def __call__(self):
+    #     while True:
+    #         text = parse_str(self.__run__())            
+    #         self.win.clear()
+    #         try:
+    #             self.win.addstr(text)
+    #         except error:
+    #             pass
+    #         sleep(self.refresh)
+            
+    # @property
+    # def border(self):
+    #     return self._border
     
-    @title_color.setter
-    def title_color(self, title_color):
-        self._title_color = title_color
-        self.__do_border_title__()
-
-
-
-
-
-class ErrorModule(BaseModule):
+    # @border.setter
+    # def border(self, border):
+    #     self._border = border
+    #     self.__do_border_title__()
+            
+    # @property
+    # def border_color(self):
+    #     return self._border_color
     
-    def __init__(self, *, out_win, win, refreshInterval = None, border=True, border_color = None, title = 'Module error', title_color = None, **kwargs):
-        super().__init__(out_win=out_win, win=win, refreshInterval=refreshInterval, border=border, border_color='red', title=title, title_color='red', **kwargs)
+    # @border_color.setter
+    # def border_color(self, border_color):
+    #     self._border_color = border_color
+    #     self.__do_border_title__()
+        
+    # @property
+    # def title(self):
+    #     return self._title
     
-    def __call__(self, msg):
-        self.win.clear()
-        try:
-            self.win.addstr(msg, colors('red'))
-        except error:
-            pass
+    # @title.setter
+    # def title(self, title):
+    #     self._title = title
+    #     self.__do_border_title__()
+        
+    # @property
+    # def title_color(self):
+    #     return self._title_color
+    
+    # @title_color.setter
+    # def title_color(self, title_color):
+    #     self._title_color = title_color
+    #     self.__do_border_title__()
+
+
+
+
+
+class ErrorModule(Static):
+    DEFAULT_CSS = """
+        ErrorModule {
+            border: heavy red;
+            border-title-align: center;
+            border-title-color: red;
+            color: red;
+        }
+    """
+    
+    def compose(self):
+        self.border_title = "Module error"
+        yield from super().compose()
