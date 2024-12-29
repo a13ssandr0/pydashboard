@@ -207,6 +207,9 @@ class BitTorrent(BaseModule):
     def __call__(self):
         torrents = self.session.get(self.referer + '/api/v2/torrents/info?filter=all&reverse=false&sort=downloaded').json()
         
+        if not torrents:
+            return
+        
         return mktable(table=DataFrame.from_dict(torrents), 
                        humanize=_human if self.human_readable else None, 
                        justify=_justify, 

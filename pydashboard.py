@@ -6,11 +6,9 @@ from typing import Any, NamedTuple, cast
 import yaml
 from textual.app import App
 
-from basemod import BaseModule, ErrorModule
+from basemod import BaseModule, ErrorModule, Coordinates
 
-Coordinates = NamedTuple('Coordinates', [
-    ('h', int), ('w', int), ('y', int), ('x', int),
-])
+
 
 imported_modules = set()
 
@@ -52,7 +50,7 @@ class MainApp(App):
             try:
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
-                widget:BaseModule = m.widget(**conf)
+                widget:BaseModule = m.widget(coords=coords, id=key, **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-def sizeof_fmt(num, suffix="B"):
+def sizeof_fmt(num, suffix="B"): #psutil._common.bytes2human
     for unit in ("", "K", "M", "G", "T", "P", "E", "Z"):
         if abs(num) < 1024.0:
             return f"{num:3.1f}{unit}{suffix}"

@@ -1,12 +1,16 @@
 from curses import window, error
 import curses
 from time import sleep
-from typing import Literal
+from typing import Literal, NamedTuple
 from stransi import Ansi, Escape
 from textual.widgets import Static
 from textual.containers import ScrollableContainer
 from durations import Duration
 import os
+
+Coordinates = NamedTuple('Coordinates', [
+    ('h', int), ('w', int), ('y', int), ('x', int),
+])
 
 
 class BaseModule(ScrollableContainer):
@@ -15,6 +19,8 @@ class BaseModule(ScrollableContainer):
     #     cls.__init__.__kwdefaults__['title'] = cls.__name__
     
     def __init__(self, *,
+                 coords:Coordinates,
+                 id:str=None,
                  refreshInterval:int|float|str=None, 
                  border=("round", "white"),
                  title:str=None,
@@ -27,10 +33,11 @@ class BaseModule(ScrollableContainer):
                  subtitle_background:str=None,
                  subtitle_color:str="white",
                  subtitle_style:str=None,
-                 id:str=None,
                  **kwargs):
         """Init module and load config"""
         super().__init__(id=id)
+        # self.coords=coords
+        # self.outer_size
         
         if isinstance(refreshInterval, str):
             refreshInterval = Duration(refreshInterval).to_seconds()
@@ -60,7 +67,9 @@ class BaseModule(ScrollableContainer):
         raise NotImplementedError('Stub')
     
     def update(self):
-        self.inner.update('\n'.join([l+(' '*os.get_terminal_size().columns) for l in str(self()).splitlines()]))
+        txt=self()
+        # self.inner.update('\n'.join([l+(' '*os.get_terminal_size().columns) for l in str(self()).splitlines()]))
+        self.inner.update('\n'.join([l for l in str(txt if txt is not None else '').splitlines()]))
     
     def compose(self):
         self.inner = Static()
