@@ -1,14 +1,12 @@
 from argparse import ArgumentParser
 from importlib import import_module, invalidate_caches, reload
 from pathlib import Path
-from typing import Any, NamedTuple, cast
+from typing import Any, cast
 
 import yaml
 from textual.app import App
 
-from basemod import BaseModule, ErrorModule, Coordinates
-
-
+from basemod import BaseModule, Coordinates, ErrorModule
 
 imported_modules = set()
 

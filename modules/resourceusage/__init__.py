@@ -1,7 +1,9 @@
-from basemod import BaseModule
-from .cpu import get_cpu_data
 import psutil as ps
 from psutil._common import bytes2human as b2h
+
+from basemod import BaseModule
+
+from .cpu import get_cpu_data
 
 
 class ResourceUsage(BaseModule):
