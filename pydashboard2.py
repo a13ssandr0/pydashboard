@@ -1,6 +1,9 @@
 from datetime import datetime
+from operator import itemgetter
+from typing import List
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static, Digits
+from rich.text import Text
 # from modules import clock
 
 class TimeDisplay(Digits):
@@ -46,12 +49,42 @@ class StopwatchApp(App):
         """Create child widgets for the app."""
         # yield Header()
         # yield Footer()
-        yield TimeDisplay('00:00:00')
-        # s= Static("I see a \033[1;31mred\033[;39m door, and I want it painted \033[1;30mblack\033[;39m Ciao", expand=True)
-        # s.styles.width="50%"
-        # yield s
+        # yield TimeDisplay('00:00:00')
+        s= Static(markup(Text.from_ansi("I see a \033[1;31mred door, and I want it painted \033[1;30mblack [yellow]Ciao[/yellow]")))
+        s.styles.width="50%"
+        yield s
 
     
+def markup(self) -> str:
+    """Get console markup to render this Text.
+
+    Returns:
+        str: A string potentially creating markup tags.
+    """
+    # from .markup import escape
+
+    output: List[str] = []
+
+    plain = self.plain
+    markup_spans = [
+        (0, False, self.style),
+        *((span.start, False, span.style) for span in self._spans),
+        *((span.end, True, span.style) for span in self._spans),
+        (len(plain), True, self.style),
+    ]
+    markup_spans.sort(key=itemgetter(0, 1))
+    position = 0
+    append = output.append
+    for offset, closing, style in markup_spans:
+        if offset > position:
+            append(plain[position:offset])
+            position = offset
+        if style:
+            append(f"[/{style}]" if closing else f"[{style}]")
+    markup = "".join(output)
+    return markup
+
+
 
 
 if __name__ == "__main__":

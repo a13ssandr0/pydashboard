@@ -28,9 +28,9 @@ class ResourceUsage(BaseModule):
             smem = ps.swap_memory()
             bars.append([smem.percent, f'{b2h(smem.used)}/{b2h(smem.total)}', 'Swp', 'green'])
         
-        w = self.outer_size.width
-        if w<1: return
-        return '\n'.join([createBar(max_w=w-2, perc=perc, text=text, pre_txt=pre_txt, color=color) for perc, text, pre_txt, color in bars])
+        return '\n'.join([createBar(max_w=self.content_width, 
+                                    perc=perc, text=text, 
+                                    pre_txt=pre_txt, color=color) for perc, text, pre_txt, color in bars])
     
 widget = ResourceUsage
 

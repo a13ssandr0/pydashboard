@@ -3,6 +3,9 @@ from typing import Literal, NamedTuple
 from durations import Duration
 from textual.containers import ScrollableContainer
 from textual.widgets import Static
+from rich.text import Text
+
+from helpers.strings import markup
 
 Coordinates = NamedTuple('Coordinates', [
     ('h', int), ('w', int), ('y', int), ('x', int),
@@ -11,6 +14,7 @@ Coordinates = NamedTuple('Coordinates', [
 
 class BaseModule(ScrollableContainer):
     def __init__(self, *,
+                 coords:Coordinates,
                  id:str=None,
                  refreshInterval:int|float|str=None, 
                  border=("round", "white"),
@@ -28,11 +32,16 @@ class BaseModule(ScrollableContainer):
         """Init module and load config"""
         super().__init__(id=id)
         
+        self.content_width = coords.w
+        self.content_height = coords.h
+        
         if isinstance(refreshInterval, str):
             refreshInterval = Duration(refreshInterval).to_seconds()
         self.refreshInterval = refreshInterval
         
         if border:
+            self.content_width -= 2
+            self.content_height -= 2
             self.styles.border = border or "none"
             self.border_title = title if title is not None else self.__class__.__name__
             self.styles.border_title_align = title_align
@@ -51,8 +60,10 @@ class BaseModule(ScrollableContainer):
         raise NotImplementedError('Stub')
     
     def update(self):
-        txt=self()
-        self.inner.update('\n'.join([l for l in str(txt if txt is not None else '').splitlines()]))
+        txt = self()
+        txt = str(txt if txt is not None else '')
+        txt = Text.from_ansi(txt)
+        self.inner.update(markup(txt))
     
     def compose(self):
         self.inner = Static()

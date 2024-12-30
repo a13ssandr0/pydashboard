@@ -9,6 +9,10 @@ class CmdRunner(BaseModule):
         super().__init__(**kwargs)
         
     def __call__(self):
-        return run(args=self.args, stdout=self.stdout_pipe, stderr=self.stderr_pipe).stdout.decode()
+        return run(args=self.args, stdout=self.stdout_pipe, stderr=self.stderr_pipe,
+                   env={
+                       'COLUMNS': str(self.content_width), 
+                       'LINES': str(self.content_height)
+                       }).stdout.decode()
     
 widget = CmdRunner
