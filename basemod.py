@@ -4,6 +4,9 @@ from durations import Duration
 from textual.containers import ScrollableContainer
 from textual.widgets import Static
 from rich.text import Text
+import traceback
+from textual.css.types import AlignHorizontal, AlignVertical
+from textual.css._style_properties import BorderDefinition, ColorProperty, StyleFlagsProperty
 
 from helpers.strings import markup
 
@@ -16,18 +19,21 @@ class BaseModule(ScrollableContainer):
     def __init__(self, *,
                  coords:Coordinates,
                  id:str=None,
-                 refreshInterval:int|float|str=None, 
-                 border=("round", "white"),
+                 refreshInterval:int|float|str=None,
+                 align_horizontal:AlignHorizontal="left",
+                 align_vertical:AlignVertical="top",
+                 color:ColorProperty=None,
+                 border:BorderDefinition=("round", "white"),
                  title:str=None,
-                 title_align:Literal['left','center','right']="center",
-                 title_background:str=None,
-                 title_color:str="white",
-                 title_style:str=None,
+                 title_align:AlignHorizontal="center",
+                 title_background:ColorProperty=None,
+                 title_color:ColorProperty="white",
+                 title_style:StyleFlagsProperty=None,
                  subtitle:str=None,
-                 subtitle_align:Literal['left','center','right']="center",
-                 subtitle_background:str=None,
-                 subtitle_color:str="white",
-                 subtitle_style:str=None,
+                 subtitle_align:AlignHorizontal="right",
+                 subtitle_background:ColorProperty=None,
+                 subtitle_color:ColorProperty="white",
+                 subtitle_style:StyleFlagsProperty=None,
                  **kwargs):
         """Init module and load config"""
         super().__init__(id=id)
@@ -39,10 +45,15 @@ class BaseModule(ScrollableContainer):
             refreshInterval = Duration(refreshInterval).to_seconds()
         self.refreshInterval = refreshInterval
         
+        self.styles.align_horizontal = align_horizontal
+        self.styles.align_vertical = align_vertical
+        
+        self.styles.color = color
+        
         if border:
             self.content_width -= 2
             self.content_height -= 2
-            self.styles.border = border or "none"
+            self.styles.border = tuple(border) or "none"
             self.border_title = title if title is not None else self.__class__.__name__
             self.styles.border_title_align = title_align
             self.styles.border_title_background = title_background
@@ -60,10 +71,13 @@ class BaseModule(ScrollableContainer):
         raise NotImplementedError('Stub')
     
     def update(self):
-        txt = self()
-        txt = str(txt if txt is not None else '')
-        txt = Text.from_ansi(txt)
-        self.inner.update(markup(txt))
+        try:
+            txt = self()
+            txt = str(txt if txt is not None else '')
+            txt = Text.from_ansi(txt)
+            self.inner.update(markup(txt))
+        except:
+            self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
     
     def compose(self):
         self.inner = Static()
