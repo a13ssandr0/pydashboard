@@ -1,10 +1,7 @@
-import asyncio
+import socket
 from collections import OrderedDict
-from contextlib import closing
 from datetime import datetime, timedelta
-
 from basemod import BaseModule
-
 
 CMD_STATUS = b"\x00\x06status"
 EOF = b"  \n\x00\x00"
@@ -31,12 +28,12 @@ class APCUPSd(BaseModule):
         self.__model_as_title = title is None
         super().__init__(title=title, **kwargs)
         
-    async def __call__(self):
+    def __call__(self):
         try:
-            status = await self.get()
-        except asyncio.TimeoutError:
+            status = self.get()
+        except TimeoutError:
             return 'Connection timed out'
-            
+        
         if self.__model_as_title:
             self.border_title = status['MODEL']
 
@@ -57,17 +54,19 @@ class APCUPSd(BaseModule):
         "XOFFBATT: {XOFFBATT}  XONBATT: {XONBATT}\n"
         ).strip().format_map(status)
     
-    async def get(self):
+    def get(self):
         """
         Connect to the APCUPSd NIS and request its status.
         """
-        fut = asyncio.open_connection(self.host, self.port)
-        reader, writer = await asyncio.wait_for(fut, timeout=self.timeout)
-        with closing(writer):
-            writer.write(CMD_STATUS)
-            await writer.drain()
-
-            return self.parse((await reader.read()).decode(), True)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(self.timeout)
+            sock.connect((self.host, self.port))
+            sock.send(CMD_STATUS)
+            buffr = b""
+            while not buffr.endswith(EOF):
+                buffr += sock.recv(BUFFER_SIZE)
+            sock.close()
+        return self.parse(buffr.decode(), True)
 
     def parse(self, raw_status, strip_units=False):
         """

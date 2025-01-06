@@ -1,12 +1,12 @@
 from argparse import ArgumentParser
-import asyncio
 from importlib import import_module, invalidate_caches, reload
-from inspect import isawaitable, iscoroutinefunction
 from pathlib import Path
 from typing import Any, cast
+from threading import Thread
 
 import yaml
 from textual.app import App
+from threading import Event
 
 from basemod import BaseModule, Coordinates, ErrorModule
 
@@ -21,7 +21,7 @@ class MainApp(App):
         }
     """
     
-    ready_hooks = []
+    ready_hooks = {}
     
     def compose(self):
         with open(self.config) as file:
@@ -69,17 +69,19 @@ class MainApp(App):
             widget.styles.overflow_x = "hidden"
             widget.styles.overflow_y = "hidden"
             yield widget
-            
+
             try:
-                self.ready_hooks.append(widget.on_ready)
+                self.ready_hooks[key] = widget.on_ready
             except AttributeError:
                 pass
 
-    async def on_ready(self):
-        # for hook in self.ready_hooks:
-        #     await hook()
-        await asyncio.gather(*[hook() for hook in self.ready_hooks if iscoroutinefunction(hook)])
-
+    def on_ready(self):
+        self.signal = Event()
+        for key, hook in self.ready_hooks.items():
+            Thread(target=hook, args=(self.signal,), name=key).start()
+            
+    def on_exit_app(self):
+        self.signal.set()
 
 # def reload_handler(args):
 #     with open(args.config) as file:

@@ -2,8 +2,6 @@
 from pandas import DataFrame
 from requests import Session
 
-from httpx import AsyncClient
-
 from basemod import BaseModule
 from helpers import noneg
 from helpers.strings import ljust, rjust
@@ -201,14 +199,14 @@ class BitTorrent(BaseModule):
         self.referer = f'{scheme}://{host}:{port}'
         self.url = f'{scheme}://{host}:{port}/api/v2/auth/login'
         
-    async def __post_init__(self):
-        self.client = AsyncClient()
-        _ = await self.client.post(self.url, 
+    def __post_init__(self):
+        self.session = Session()
+        _ = self.session.post(self.url, 
                               data={"username": self.username, "password": self.password}, 
                               headers={'Referer': self.referer})
 
-    async def __call__(self):
-        torrents = (await self.client.get(self.referer + '/api/v2/torrents/info?filter=all&reverse=false&sort=downloaded')).json()
+    def __call__(self):
+        torrents = self.session.get(self.referer + '/api/v2/torrents/info?filter=all&reverse=false&sort=downloaded').json()
         
         if not torrents:
             return

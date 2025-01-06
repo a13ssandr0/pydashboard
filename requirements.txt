@@ -1,7 +1,7 @@
 py-term
 pyyaml
 durations
-httpx
+requests
 octorest
 stransi
 psutil

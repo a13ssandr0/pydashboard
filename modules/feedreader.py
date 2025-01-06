@@ -24,21 +24,19 @@ class FeedReader(BaseModule):
         self.columns.append('title')
             
         self.limit=limit
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)          
         
-    async def parse_feeds(self):
-        async with AsyncClient() as client:
-            return await asyncio.gather(*[client.get(f) for f in self.feeds])
-                
-        
-    async def __call__(self):
+    def __call__(self):
         news = []
-        for feed in await self.parse_feeds():
+        for feed in self.feeds:
             feed = feedparser.parse(feed)
-            for entry in feed.entries:
-                entry['source']=feed.feed.title
-                news.append(entry)
-            
+            if feed.status == 200:
+                for entry in feed.entries:
+                    entry['source']=feed.feed.title
+                    news.append(entry)
+            else:
+                return f"Failed to get RSS feed {feed.url}. Status code: {feed.status}"
+                
         
         df = DataFrame.from_dict(news).sort_values('published_parsed', ascending=False).reset_index()
         del df['index']
