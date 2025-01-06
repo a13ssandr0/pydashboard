@@ -1,13 +1,16 @@
-from typing import cast
-import feedparser
-from basemod import BaseModule
-from pandas import DataFrame
-
-from helpers.strings import rjust
-from helpers.tables import mktable
+import asyncio
 from time import strftime
 
-class Clock(BaseModule):
+import feedparser
+from httpx import AsyncClient
+from pandas import DataFrame
+
+from basemod import BaseModule
+from helpers.strings import rjust
+from helpers.tables import mktable
+
+
+class FeedReader(BaseModule):
     def __init__(self, *, feeds:list[str], showSource=True, showPublishDate=True, showIndex=False, limit=20, **kwargs):
         self.feeds=feeds
         
@@ -23,17 +26,19 @@ class Clock(BaseModule):
         self.limit=limit
         super().__init__(**kwargs)
         
-    def __call__(self):
+    async def parse_feeds(self):
+        async with AsyncClient() as client:
+            return await asyncio.gather(*[client.get(f) for f in self.feeds])
+                
+        
+    async def __call__(self):
         news = []
-        for feed in self.feeds:
+        for feed in await self.parse_feeds():
             feed = feedparser.parse(feed)
-
-            if feed.status == 200:
-                for entry in feed.entries:
-                    entry['source']=feed.feed.title
-                    news.append(entry)
-            else:
-                return "Failed to get RSS feed. Status code: " + feed.status
+            for entry in feed.entries:
+                entry['source']=feed.feed.title
+                news.append(entry)
+            
         
         df = DataFrame.from_dict(news).sort_values('published_parsed', ascending=False).reset_index()
         del df['index']
@@ -52,5 +57,6 @@ class Clock(BaseModule):
                            'source': lambda t: f"[green]{t}[/green]"
                        },
                        print_header=False)
+
     
-widget = Clock
+widget = FeedReader

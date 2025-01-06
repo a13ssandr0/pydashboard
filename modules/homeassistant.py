@@ -2,7 +2,7 @@ from json import loads
 from re import compile
 
 import urllib3
-from requests import get
+from httpx import AsyncClient
 
 from basemod import BaseModule
 
@@ -34,9 +34,10 @@ class HomeAssistant(BaseModule):
         }
         super().__init__(**kwargs)
         
-    def __call__(self):
+    async def __call__(self):
         try:
-            states_dict = sorted(loads(get(self.url, headers=self.headers, verify=False).text), key = lambda o: o["entity_id"])
+            async with AsyncClient(verify=False) as client:
+                states_dict = sorted(loads((await client.get(self.url, headers=self.headers)).text), key = lambda o: o["entity_id"])
         except ConnectionError as e:
             return e.strerror
 

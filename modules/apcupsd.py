@@ -1,7 +1,10 @@
-import socket
+import asyncio
 from collections import OrderedDict
+from contextlib import closing
 from datetime import datetime, timedelta
+
 from basemod import BaseModule
+
 
 CMD_STATUS = b"\x00\x06status"
 EOF = b"  \n\x00\x00"
@@ -28,9 +31,12 @@ class APCUPSd(BaseModule):
         self.__model_as_title = title is None
         super().__init__(title=title, **kwargs)
         
-    def __call__(self):
-        status = self.get()
-        
+    async def __call__(self):
+        try:
+            status = await self.get()
+        except asyncio.TimeoutError:
+            return 'Connection timed out'
+            
         if self.__model_as_title:
             self.border_title = status['MODEL']
 
@@ -44,26 +50,24 @@ class APCUPSd(BaseModule):
         status['XONBATT']  = self.human_readable_time(status.get('XONBATT', 'N/A'))
 
         return (
-        """{STATUS:<20} {LINEV}V     {BCHARGE}%\n"""
-        """LOAD: {LOADPCT:>3}% ({LOADPWR}W)  {TIMELEFT} mins left\n"""
-        """LAST: {LASTXFER}\n"""
-        """ONBATT:   {TONBATT}s/{CUMONBATT}s ({NUMXFERS})\n"""
-        """XOFFBATT: {XOFFBATT}  XONBATT: {XONBATT}\n"""
+        "{STATUS:<20} {LINEV}V     {BCHARGE}%\n"
+        "LOAD: {LOADPCT:>3}% ({LOADPWR}W)  {TIMELEFT} mins left\n"
+        "LAST: {LASTXFER}\n"
+        "ONBATT:   {TONBATT}s/{CUMONBATT}s ({NUMXFERS})\n"
+        "XOFFBATT: {XOFFBATT}  XONBATT: {XONBATT}\n"
         ).strip().format_map(status)
     
-    def get(self):
+    async def get(self):
         """
         Connect to the APCUPSd NIS and request its status.
         """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(self.timeout)
-        sock.connect((self.host, self.port))
-        sock.send(CMD_STATUS)
-        buffr = b""
-        while not buffr.endswith(EOF):
-            buffr += sock.recv(BUFFER_SIZE)
-        sock.close()
-        return self.parse(buffr.decode(), True)
+        fut = asyncio.open_connection(self.host, self.port)
+        reader, writer = await asyncio.wait_for(fut, timeout=self.timeout)
+        with closing(writer):
+            writer.write(CMD_STATUS)
+            await writer.drain()
+
+            return self.parse((await reader.read()).decode(), True)
 
     def parse(self, raw_status, strip_units=False):
         """

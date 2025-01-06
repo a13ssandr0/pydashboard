@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
+import asyncio
 from importlib import import_module, invalidate_caches, reload
+from inspect import isawaitable, iscoroutinefunction
 from pathlib import Path
 from typing import Any, cast
 
@@ -18,6 +20,9 @@ class MainApp(App):
             overflow: hidden hidden;
         }
     """
+    
+    ready_hooks = []
+    
     def compose(self):
         with open(self.config) as file:
             config = yaml.safe_load(file)
@@ -64,8 +69,16 @@ class MainApp(App):
             widget.styles.overflow_x = "hidden"
             widget.styles.overflow_y = "hidden"
             yield widget
+            
+            try:
+                self.ready_hooks.append(widget.on_ready)
+            except AttributeError:
+                pass
 
-
+    async def on_ready(self):
+        # for hook in self.ready_hooks:
+        #     await hook()
+        await asyncio.gather(*[hook() for hook in self.ready_hooks if iscoroutinefunction(hook)])
 
 
 # def reload_handler(args):

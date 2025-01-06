@@ -1,14 +1,17 @@
-from typing import Literal, NamedTuple
+import inspect
+import traceback
+from typing import NamedTuple
 
 from durations import Duration
-from textual.containers import ScrollableContainer
-from textual.widgets import Static
 from rich.text import Text
-import traceback
+from textual.containers import ScrollableContainer
+from textual.css._style_properties import (BorderDefinition, ColorProperty,
+                                           StyleFlagsProperty)
 from textual.css.types import AlignHorizontal, AlignVertical
-from textual.css._style_properties import BorderDefinition, ColorProperty, StyleFlagsProperty
+from textual.widgets import Static
 
 from helpers.strings import markup
+
 
 Coordinates = NamedTuple('Coordinates', [
     ('h', int), ('w', int), ('y', int), ('x', int),
@@ -65,26 +68,40 @@ class BaseModule(ScrollableContainer):
             self.styles.border_subtitle_color = subtitle_color
             self.styles.border_subtitle_style = subtitle_style
 
+        self.inner = Static()
+        self.inner.styles.width = "auto"
+        self.inner.styles.height = "auto"
+
+    def __post_init__(self):
+        """Perform post initialization async tasks"""
+        pass
         
     def __call__(self) -> str:
         """Method called each time the module has to be updated"""
         raise NotImplementedError('Stub')
     
-    def update(self):
-        try:
-            txt = self()
-            txt = str(txt if txt is not None else '')
-            txt = Text.from_ansi(txt)
-            self.inner.update(markup(txt))
-        except:
-            self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
+    async def update(self):
+        # try:
+            result = self()
+            if inspect.isawaitable(result):
+                result = await result
+                
+            if result is None:
+                self.inner.update('')
+            else:
+                self.inner.update(markup(Text.from_ansi(str(result))))
+        # except:
+        #     self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
+    
+    async def on_ready(self):
+        p_i = self.__post_init__()
+        if inspect.isawaitable(p_i):
+            await p_i
+        
+        await self.update()
+        self.set_interval(self.refreshInterval, self.update)
     
     def compose(self):
-        self.inner = Static()
-        self.inner.styles.width = "auto"
-        self.inner.styles.height = "auto"
-        self.update()
-        self.set_interval(self.refreshInterval, self.update)
         yield self.inner
         
 
