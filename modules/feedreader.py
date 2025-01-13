@@ -41,8 +41,7 @@ class FeedReader(TableModule):
                     entry['source']=feed.feed.title
                     news.append(entry)
             else:
-                return f"Failed to get RSS feed {feed.url}. Status code: {feed.status}"
-                
+                self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
         
         df = DataFrame.from_dict(news).sort_values('published_parsed', ascending=False).reset_index()
         del df['index']

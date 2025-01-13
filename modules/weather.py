@@ -1,4 +1,3 @@
-
 from basemod import BaseModule
 
 import requests
@@ -23,7 +22,7 @@ class Weather(BaseModule):
         self.no_colors = no_colors
         self.console_glyphs = console_glyphs
         
-        self.url = 'https://wttr.in/' + self.location + '?AF'
+        self.url = 'http://wttr.in/' + self.location + '?AF'
         if today_forecast and tomorrow_forecast:
             self.url += '2'         # current weather + today's + tomorrow's forecastc
         elif today_forecast:
@@ -61,6 +60,9 @@ class Weather(BaseModule):
         
         
     def __call__(self):
-        return requests.get(self.url, headers=self.headers).text
+        try:
+            return requests.get(self.url, headers=self.headers).text
+        except ConnectionError:
+            pass
     
 widget = Weather

@@ -190,10 +190,9 @@ class BitTorrent(TableModule):
             if response.status_code == 200:
                 torrents = response.json()
         
-                if not torrents:
-                    return
+                if torrents:
+                    return DataFrame.from_dict(torrents)
                 
-                return DataFrame.from_dict(torrents)
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
