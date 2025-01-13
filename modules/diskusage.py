@@ -1,9 +1,7 @@
 import psutil
 from pandas import DataFrame
 
-from basemod import BaseModule
-from helpers.strings import ljust, rjust
-from helpers.tables import mktable
+from basemod import TableModule
 from helpers.units import perc_fmt, sizeof_fmt
 
 _names_map = {
@@ -18,14 +16,14 @@ _names_map = {
 }
 
 _justify = {
-    'device':     ljust,
-    'fstype':     ljust,
-    'total':      rjust,
-    'used':       rjust,
-    'free':       rjust,
-    'percent':    rjust,
-    'mountpoint': ljust,
-    'opts':       ljust,
+    'device':     'left',
+    'fstype':     'left',
+    'total':      'right',
+    'used':       'right',
+    'free':       'right',
+    'percent':    'right',
+    'mountpoint': 'left',
+    'opts':       'left',
 }
 
 _human = {
@@ -40,14 +38,16 @@ _human = {
 }
 
 
-class DiskUsage(BaseModule):
+class DiskUsage(TableModule):
+    column_names = _names_map
+    justify = _justify
+    
     def __init__(self, *, columns:list[str]=['device', 'fstype', 'total', 'used', 'free', 'percent', 'mountpoint'], 
+                 sort:str|tuple[str,bool]|list[str|tuple[str,bool]]|None='mountpoint',
                  exclude:list[str]=None, human_readable=True, sizes:list[int]=None, **kwargs):
-        self.columns=columns
         self.exclude=exclude
-        self.human_readable=human_readable
-        self.sizes=sizes
-        super().__init__(**kwargs)
+        self.humanize = _human if human_readable else None
+        super().__init__(columns=columns, show_header=True, sizes=sizes, sort=sort, **kwargs)
         
     def __call__(self):
         partitions = [{**part._asdict(), **psutil.disk_usage(part.mountpoint)._asdict()} for part in psutil.disk_partitions() if not self.exclude or part.fstype not in self.exclude]
@@ -55,13 +55,6 @@ class DiskUsage(BaseModule):
         table = DataFrame.from_dict(partitions)
         table['percent'] /= 100
         
-        return mktable(table=table, 
-                       humanize=_human if self.human_readable else None, 
-                       column_names=_names_map,
-                       justify=_justify, 
-                       sortby='mountpoint', 
-                       print_header=True,
-                       select_columns=self.columns,
-                       sizes=self.sizes)
+        return table
     
 widget = DiskUsage

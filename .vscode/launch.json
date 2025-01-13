@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/pydashboard.py",
             "args": ["${workspaceFolder}/config.yml"],
-            // "console": "externalTerminal",
+            "console": "externalTerminal",
             // "justMyCode": false
         },
         {

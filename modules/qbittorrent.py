@@ -1,11 +1,8 @@
-# from multisort import multisort
 from pandas import DataFrame
 from requests import JSONDecodeError, Session
 
-from basemod import BaseModule
+from basemod import TableModule
 from helpers import noneg
-from helpers.strings import ljust, rjust
-from helpers.tables import mktable
 from helpers.units import (duration_fmt, perc_fmt, sizeof_fmt, speedof_fmt,
                            time_fmt)
 
@@ -58,52 +55,52 @@ colors_map = {
 
 
 _justify = {
-    'added_on':           ljust,
-    'amount_left':        rjust,
-    'auto_tmm':           ljust,
-    'availability':       rjust,
-    'category':           ljust,
-    'completed':          rjust,
-    'completion_on':      ljust,
-    'content_path':       ljust,
-    'dl_limit':           rjust,
-    'dlspeed':            rjust,
-    'downloaded':         rjust,
-    'downloaded_session': rjust,
-    'eta':                ljust,
-    'f_l_piece_prio':     ljust,
-    'force_start':        ljust,
-    'hash':               ljust,
-    'isPrivate':          ljust,
-    'last_activity':      ljust,
-    'magnet_uri':         ljust,
-    'max_ratio':          rjust,
-    'max_seeding_time':   ljust,
-    'name':               ljust,
-    'num_complete':       rjust,
-    'num_incomplete':     rjust,
-    'num_leechs':         rjust,
-    'num_seeds':          rjust,
-    'priority':           rjust,
-    'progress':           rjust,
-    'ratio':              rjust,
-    'ratio_limit':        rjust,
-    'save_path':          ljust,
-    'seeding_time':       ljust,
-    'seeding_time_limit': ljust,
-    'seen_complete':      ljust,
-    'seq_dl':             ljust,
-    'size':               rjust,
-    'state':              ljust,
-    'super_seeding':      ljust,
-    'tags':               ljust,
-    'time_active':        ljust,
-    'total_size':         rjust,
-    'tracker':            ljust,
-    'up_limit':           rjust,
-    'uploaded':           rjust,
-    'uploaded_session':   rjust,
-    'upspeed':            rjust,
+    'added_on':           'left',
+    'amount_left':        'right',
+    'auto_tmm':           'left',
+    'availability':       'right',
+    'category':           'left',
+    'completed':          'right',
+    'completion_on':      'left',
+    'content_path':       'left',
+    'dl_limit':           'right',
+    'dlspeed':            'right',
+    'downloaded':         'right',
+    'downloaded_session': 'right',
+    'eta':                'left',
+    'f_l_piece_prio':     'left',
+    'force_start':        'left',
+    'hash':               'left',
+    'isPrivate':          'left',
+    'last_activity':      'left',
+    'magnet_uri':         'left',
+    'max_ratio':          'right',
+    'max_seeding_time':   'left',
+    'name':               'left',
+    'num_complete':       'right',
+    'num_incomplete':     'right',
+    'num_leechs':         'right',
+    'num_seeds':          'right',
+    'priority':           'right',
+    'progress':           'right',
+    'ratio':              'right',
+    'ratio_limit':        'right',
+    'save_path':          'left',
+    'seeding_time':       'left',
+    'seeding_time_limit': 'left',
+    'seen_complete':      'left',
+    'seq_dl':             'left',
+    'size':               'right',
+    'state':              'right',
+    'super_seeding':      'left',
+    'tags':               'left',
+    'time_active':        'left',
+    'total_size':         'right',
+    'tracker':            'left',
+    'up_limit':           'right',
+    'uploaded':           'right',
+    'uploaded_session':   'right',
+    'upspeed':            'right',
 }
 
 _human = {
@@ -160,41 +157,23 @@ def colorize(state):
     return f'[{c}]{state}[/{c}]'
 
 
-class BitTorrent(BaseModule):
+class BitTorrent(TableModule):
+    justify=_justify
+    colorize={'state': colorize}
+    
     def __init__(self, *, host, username, password, port=8080, scheme='http',
                  columns:list[str]=['state', 'progress', 'ratio', 'name'],
-                 sort:str|tuple[str,bool]|list[str|tuple[str,bool]]=None,
-                 human_readable=True,
+                 sort:str|tuple[str,bool]|list[str|tuple[str,bool]]=('downloaded', False),
+                 human_readable=True, show_header=False,
                  **kwargs):
         self.host=host
         self.username=username
         self.password=password
         self.port=port
         self.scheme=scheme
-        self.columns=columns
-        self.human_readable=human_readable
-        if isinstance(sort, str):
-            self.sortby = [sort]
-            self.reverse = [False]
-        elif isinstance(sort, (list,tuple)):
-            if len(sort)==2 and isinstance(sort[0], str) and isinstance(sort[1], bool):
-                self.sortby = [sort[0]]
-                self.reverse = [sort[1]]
-            else:
-                self.sortby = []
-                self.reverse = []
-                for e in sort:
-                    if isinstance(e, (list,tuple)):
-                        self.sortby.append(e[0])
-                        self.reverse.append(e[1])
-                    else:
-                        self.sortby.append(e)
-                        self.reverse.append(False)
-        else:
-            self.sortby = ['downloaded']
-            self.reverse = [False]
+        self.humanize = _human if human_readable else None
             
-        super().__init__(**kwargs)
+        super().__init__(columns=columns, show_header=show_header, sort=sort, **kwargs)
         
         self.referer = f'{scheme}://{host}:{port}'
         self.url = f'{scheme}://{host}:{port}/api/v2/auth/login'
@@ -214,22 +193,15 @@ class BitTorrent(BaseModule):
                 if not torrents:
                     return
                 
-                return mktable(table=DataFrame.from_dict(torrents), 
-                            humanize=_human if self.human_readable else None, 
-                            justify=_justify, 
-                            colorize={'state': colorize}, 
-                            sortby=self.sortby, 
-                            reverse=self.reverse, 
-                            print_header=False,
-                            select_columns=self.columns)
+                return DataFrame.from_dict(torrents)
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
-                return 
+
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            return e.strerror
+
             
         
     

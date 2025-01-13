@@ -3,26 +3,34 @@ from time import strftime
 import feedparser
 from pandas import DataFrame
 
-from basemod import BaseModule
-from helpers.strings import rjust
-from helpers.tables import mktable
+from basemod import TableModule
 
 
-class FeedReader(BaseModule):
+class FeedReader(TableModule):
+    justify={'index': 'right'}
+    humanize={
+        'index': lambda i: str(i)+'.',
+        'published_parsed': lambda t: strftime("%b %d", t)
+    }
+    colorize={
+        'published_parsed': lambda t: f"[yellow]{t}[/yellow]",
+        'source': lambda t: f"[green]{t}[/green]"
+    }
+    
     def __init__(self, *, feeds:list[str], showSource=True, showPublishDate=True, showIndex=False, limit=20, **kwargs):
         self.feeds=feeds
         
-        self.columns = []
+        columns = []
         if showIndex:
-            self.columns.append('index')
+            columns.append('index')
         if showSource:
-            self.columns.append('source')
+            columns.append('source')
         if showPublishDate:
-            self.columns.append('published_parsed')
-        self.columns.append('title')
+            columns.append('published_parsed')
+        columns.append('title')
             
         self.limit=limit
-        super().__init__(**kwargs)          
+        super().__init__(columns=columns, show_header=False, **kwargs)          
         
     def __call__(self):
         news = []
@@ -41,18 +49,7 @@ class FeedReader(BaseModule):
         df.reset_index(inplace=True)
         df['index'] += 1
         
-        return mktable(df.head(self.limit), 
-                       select_columns=self.columns,
-                       justify={'index': rjust},
-                       humanize={
-                           'index': lambda i: str(i)+'.',
-                           'published_parsed': lambda t: strftime("%b %d", t)
-                        },
-                       colorize={
-                           'published_parsed': lambda t: f"[yellow]{t}[/yellow]",
-                           'source': lambda t: f"[green]{t}[/green]"
-                       },
-                       print_header=False)
+        return df.head(self.limit)
 
     
 widget = FeedReader

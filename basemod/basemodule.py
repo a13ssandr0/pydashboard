@@ -1,14 +1,15 @@
+import traceback
+from threading import Event
 from time import sleep
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 
 from durations import Duration
-from textual.containers import ScrollableContainer
-from textual.widgets import Static
 from rich.text import Text
-import traceback
+from textual.containers import ScrollableContainer
+from textual.css._style_properties import (BorderDefinition, ColorProperty,
+                                           StyleFlagsProperty)
 from textual.css.types import AlignHorizontal, AlignVertical
-from textual.css._style_properties import BorderDefinition, ColorProperty, StyleFlagsProperty
-from threading import Event
+from textual.widgets import Static
 
 from helpers.strings import markup
 
@@ -18,6 +19,8 @@ Coordinates = NamedTuple('Coordinates', [
 
 
 class BaseModule(ScrollableContainer):
+    inner = Static
+    
     def __init__(self, *,
                  coords:Coordinates,
                  id:str=None,
@@ -67,7 +70,7 @@ class BaseModule(ScrollableContainer):
             self.styles.border_subtitle_color = subtitle_color
             self.styles.border_subtitle_style = subtitle_style
 
-        self.inner = Static()
+        self.inner = self.inner()
         self.inner.styles.width = "auto"
         self.inner.styles.height = "auto"
 
@@ -80,14 +83,15 @@ class BaseModule(ScrollableContainer):
         raise NotImplementedError('Stub')
     
     def update(self):
-        try:
-            result = self()
-            if result is None:
-                self.inner.update('')
-            else:
-                self.inner.update(markup(Text.from_ansi(str(result))))
-        except:
-            self.notify(traceback.format_exc(), severity='error')
+        result = self()
+        if result is None:
+            self.inner.update('')
+        else:
+            self.inner.update(markup(Text.from_ansi(str(result))))
+
+    def _update(self):
+        try: self.update()
+        except: self.notify(traceback.format_exc(), severity='error')
         #     self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
     
     def on_ready(self, signal:Event):
@@ -95,10 +99,8 @@ class BaseModule(ScrollableContainer):
             self.__post_init__()
         except:
             self.notify(traceback.format_exc(), severity='error')
-        # self.update()
-        # self.set_interval(self.refreshInterval, self.update)
         while not signal.is_set():
-            self.update()
+            self._update()
             for _ in range(round(self.refreshInterval)):
                 if signal.is_set(): return
                 sleep(1)
