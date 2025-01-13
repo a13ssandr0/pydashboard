@@ -8,7 +8,7 @@ import libvirt
 from basemod import BaseModule
 
 
-def do_docker():
+def do_docker(width:int):
     sys_info = subprocess.run(['docker', 'system', 'info', '--format', 'json'], stdout=subprocess.PIPE).stdout
     sys_df   = subprocess.run(['docker', 'system', 'df', '--format', 'json'], stdout=subprocess.PIPE).stdout
     vol_info = subprocess.run(['docker', 'volume', 'ls', '--format', 'json'], stdout=subprocess.PIPE).stdout
@@ -20,15 +20,15 @@ def do_docker():
     ctr_info:list = json.loads('[' + ctr_info.decode().strip().replace('}\n','},\n') + ']')
 
     ctr_info.sort(key = lambda x: x['Names'])
-    max_len = 10
+    max_len = 0
     for ctr in ctr_info:
-        l = len(ctr['Names'])
+        l = len(ctr['State'])
         if l>max_len: max_len=l
 
     color_state = {
         'created':    '[green]created[/green]',    #green
         'restarting': '[yellow]restarting[/yellow]', #yellow
-        'running':    '[lime]running[/lime]',    #lime
+        'running':    '[green]running[/green]',    #lime
         'removing':   '[yellow]removing[/yellow]',   #yellow
         'paused':     '[yellow]paused[/yellow]',     #yellow
         'exited':     '[red]exited[/red]',     #red
@@ -49,35 +49,46 @@ Disk usage:       Containers: {cont_spc}
         cont_spc=sys_df['Containers']['Size'], imgs_spc=sys_df['Images']['Size'],
         vols_spc=sys_df['Local Volumes']['Size'],
     )) + \
-    '\n'.join([f'{c['Names'].ljust(max_len)} {color_state.get(c['State'], c['State'])}' for c in ctr_info])
+    '\n'.join([f'{c['Names'][:width-max_len-1].ljust(width-max_len-1)} {color_state.get(c['State'], c['State'])}' for c in ctr_info])
 
     return docker_info
 
 
-def do_libvirt(hypervisor:str):
+def do_libvirt(width:int, hypervisor:str):
     state_map = {
-        libvirt.VIR_DOMAIN_NOSTATE:     '[white]mnostate[/white]',
-        libvirt.VIR_DOMAIN_RUNNING:     '[lightgreen]running[/lightgreen]',
-        libvirt.VIR_DOMAIN_BLOCKED:     '[magenta]blocked[/magenta]',
-        libvirt.VIR_DOMAIN_PAUSED:      '[lightmagenta]paused[/lightmagenta]',
-        libvirt.VIR_DOMAIN_SHUTDOWN:    '[red]shutdown[/red]',
-        libvirt.VIR_DOMAIN_SHUTOFF:     '[red]shutoff[/red]',
-        libvirt.VIR_DOMAIN_CRASHED:     '[white on red]crashed[/white on red]',
-        libvirt.VIR_DOMAIN_PMSUSPENDED: '[lightmagenta]pmsuspended[/lightmagenta]',
+        libvirt.VIR_DOMAIN_NOSTATE:     'nostate',
+        libvirt.VIR_DOMAIN_RUNNING:     'running',
+        libvirt.VIR_DOMAIN_BLOCKED:     'blocked',
+        libvirt.VIR_DOMAIN_PAUSED:      'paused',
+        libvirt.VIR_DOMAIN_SHUTDOWN:    'shutdown',
+        libvirt.VIR_DOMAIN_SHUTOFF:     'shutoff',
+        libvirt.VIR_DOMAIN_CRASHED:     'crashed',
+        libvirt.VIR_DOMAIN_PMSUSPENDED: 'pmsuspended',
+    }
+    color_state_map = {
+        'nostate':     '[white]nostate[/white]',
+        'running':     '[green]running[/green]',
+        'blocked':     '[magenta]blocked[/magenta]',
+        'paused':      '[magenta]paused[/magenta]',
+        'shutdown':    '[red]shutdown[/red]',
+        'shutoff':     '[red]shutoff[/red]',
+        'crashed':     '[white on red]crashed[/white on red]',
+        'pmsuspended': '[magenta]pmsuspended[/magenta]',
+        'unknown':     '[yellow]unknown[/yellow]',
     }
 
     with libvirt.open(hypervisor) as conn:
-        states = [(dom.name(), dom.state()[0]) for dom in conn.listAllDomains()]
+        states = [(dom.name(), state_map.get(dom.state()[0], 'unknown')) for dom in conn.listAllDomains()]
 
     states.sort(key = lambda x: x[0])
-    max_len = 15
+    max_len = 0
     for s in states:
-        l = len(s[0])
+        l = len(s[1])
         if l>max_len: max_len=l        
 
     libvirt_info = ''
     for dom in states:
-        libvirt_info += dom[0].ljust(max_len)+' '+state_map.get(dom[1], '[/lightyellow]unknown[lightyellow]')+'\n'
+        libvirt_info += dom[0][:width-max_len-1].ljust(width-max_len-1)+' '+color_state_map.get(dom[1])+'\n'
     
     return libvirt_info
         
@@ -89,32 +100,32 @@ def sysctl_states_map(status):
     reds = ['abandoned', 'bad', 'bad-setting', 'dead', 'dead-before-auto-restart', 'dead-resources-pinned', 'error', 'failed', 'failed-before-auto-restart', 'not-found']
     
     if status in greens:
-        return f'[lightgreen]{status}[/lightgreen]'
+        return f'[green]{status}[/green]'
     elif status in yellows:
-        return f'[lightyellow]{status}[/lightyellow]'
+        return f'[yellow]{status}[/yellow]'
     elif status in reds:
         return f'[red]{status}[/red]'
     else:
         return status
     
 
-def do_sysctl(*units:str):
+def do_sysctl(width:int, *units:str):
     my_units = subprocess.run(['systemctl', 'list-units', '--failed', '--quiet', '--plain'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode()
     if units:
         my_units += subprocess.run(['systemctl', 'list-units', '--all', '--quiet', '--plain', *units], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode()
     
     my_units = [u.split(' ', 4) for u in re.sub('  *', ' ', my_units).strip().split('\n') if u]
-    max_len = 15
+    my_units = [(splitext(u[0])[0], u[3]) for u in my_units]
+    max_len = 0
     for u in my_units:
-        u[0] = splitext(u[0])[0]
-        l = len(u[0])
+        l = len(u[1])
         if l>max_len: max_len=l
         
     sysctl_info = ''
     seen_units = []
     for u in my_units:
         if u[0] not in seen_units:
-            sysctl_info += u[0].ljust(max_len)+' '+sysctl_states_map(u[3])+'\n'
+            sysctl_info += u[0][:width-max_len-1].ljust(width-max_len-1)+' '+sysctl_states_map(u[1])+'\n'
             seen_units.append(u[0])
         
     return sysctl_info
@@ -130,13 +141,13 @@ class Systemctl(BaseModule):
     def __call__(self):
         out = ""
         # out += '[red]Services:[/red]' + '\n'
-        out += do_sysctl(*self.units) + '\n'
+        out += do_sysctl(self.content_width, *self.units) + '\n'
         if self.domain:
             out += '[red]VMs:[/red]' + '\n'
-            out += do_libvirt(self.domain) + '\n'
+            out += do_libvirt(self.content_width, self.domain) + '\n'
         out += '[red]Docker containers:[/red]' + '\n'
         try:
-            out += do_docker() + '\n'
+            out += do_docker(self.content_width, ) + '\n'
         except FileNotFoundError:
             out += '[yellow]Docker not installed[/yellow]'
         return out

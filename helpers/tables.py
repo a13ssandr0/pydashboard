@@ -7,7 +7,7 @@ def mktable(table:DataFrame, humanize:dict[str,callable]=None,
             column_names:dict[str,str]=None,
             justify:dict[str,callable]={}, colorize:dict[str,callable]=None,
             sortby:list[str]=None, reverse:list[bool]=None, print_header=True,
-            select_columns:str|list[str]=None):
+            select_columns:str|list[str]=None, sizes:list[int]=None):
     
     if sortby:
         if reverse is None:
@@ -29,6 +29,15 @@ def mktable(table:DataFrame, humanize:dict[str,callable]=None,
                 pass
     
     table = table.astype(str)
+    
+    if sizes:
+        for i, s in enumerate(sizes):
+            if s == 0: continue
+            try:
+                table.iloc[:,i] = table.iloc[:,i].map(lambda x: x[:s])
+            except IndexError:
+                pass
+    
     if print_header:
         if column_names:
             widths = [max(table[col].str.len().max(), len(column_names.get(col, col))) for col in table.columns]

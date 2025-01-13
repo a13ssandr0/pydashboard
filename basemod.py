@@ -87,10 +87,14 @@ class BaseModule(ScrollableContainer):
             else:
                 self.inner.update(markup(Text.from_ansi(str(result))))
         except:
-            self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
+            self.notify(traceback.format_exc(), severity='error')
+        #     self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
     
     def on_ready(self, signal:Event):
-        self.__post_init__()
+        try:
+            self.__post_init__()
+        except:
+            self.notify(traceback.format_exc(), severity='error')
         # self.update()
         # self.set_interval(self.refreshInterval, self.update)
         while not signal.is_set():

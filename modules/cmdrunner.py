@@ -1,8 +1,8 @@
-from threading import Thread
 from basemod import BaseModule
-from subprocess import run, PIPE, STDOUT
+from subprocess import run
 import os, pty
 from select import select
+
 
 
 class CmdRunner(BaseModule):
@@ -14,27 +14,32 @@ class CmdRunner(BaseModule):
         super().__init__(**kwargs)
         if wraplines:
             self.inner.styles.width = self.content_width
-        
-    def run_task(self):
+            
+        self._screen = ''
+    
+    def __post_init__(self):
         env = os.environ
         env['COLUMNS']= str(self.content_width)
         env['LINES']= str(self.content_height)
         
         proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe)
         
+        self._screen = ''
+        
         while True:
-            [ready, *_], _, _ = select((self.master_fd,), (), (), .1)
+            ready, _, _ = select((self.master_fd,), (), (), .1)
 
-            if proc.stdout in ready:
-                next_line_to_process = os.read
+            if self.master_fd in ready:
+                next_line_to_process = os.read(self.master_fd, 1024)
                 if next_line_to_process:
                     # process the output
-                    self.inner.update(next_line_to_process)
+                    self._screen += next_line_to_process.decode()
                 elif proc.returncode is not None:
                     # The program has exited, and we have read everything written to stdout
-                    ready = filter(lambda x: x is not proc.stdout, ready)
+                    ready = filter(lambda x: x is not self.master_fd, ready)
 
-            if proc.poll() is not None and not ready:
+            # if proc.poll() is not None and not ready:
+            if not ready:
                 break
 
     def __call__(self):
@@ -42,7 +47,7 @@ class CmdRunner(BaseModule):
         # while os.re:
         #     o:=os.read(self.master_fd, 1024)
         #     output += o.decode()
-        self.inner.update('Testing')
+        return self._screen
         # thread = Thread(target = self.run_task)
         # thread.run()
 

@@ -1,8 +1,6 @@
-import asyncio
 from time import strftime
 
 import feedparser
-from httpx import AsyncClient
 from pandas import DataFrame
 
 from basemod import BaseModule

@@ -1,6 +1,6 @@
 # from multisort import multisort
 from pandas import DataFrame
-from requests import Session
+from requests import JSONDecodeError, Session
 
 from basemod import BaseModule
 from helpers import noneg
@@ -206,18 +206,31 @@ class BitTorrent(BaseModule):
                               headers={'Referer': self.referer})
 
     def __call__(self):
-        torrents = self.session.get(self.referer + '/api/v2/torrents/info?filter=all&reverse=false&sort=downloaded').json()
+        try:
+            response = self.session.get(self.referer + '/api/v2/torrents/info?filter=all&reverse=false&sort=downloaded')
+            if response.status_code == 200:
+                torrents = response.json()
         
-        if not torrents:
-            return
+                if not torrents:
+                    return
+                
+                return mktable(table=DataFrame.from_dict(torrents), 
+                            humanize=_human if self.human_readable else None, 
+                            justify=_justify, 
+                            colorize={'state': colorize}, 
+                            sortby=self.sortby, 
+                            reverse=self.reverse, 
+                            print_header=False,
+                            select_columns=self.columns)
+            else:
+                self.border_subtitle = f'{response.status_code} {response.reason}'
+                self.styles.border_subtitle_color = 'red'
+                return 
+        except JSONDecodeError as e:
+            self.border_subtitle = f'JSONDecodeError'
+            self.styles.border_subtitle_color = 'red'
+            return e.strerror
+            
         
-        return mktable(table=DataFrame.from_dict(torrents), 
-                       humanize=_human if self.human_readable else None, 
-                       justify=_justify, 
-                       colorize={'state': colorize}, 
-                       sortby=self.sortby, 
-                       reverse=self.reverse, 
-                       print_header=False,
-                       select_columns=self.columns)
     
 widget = BitTorrent

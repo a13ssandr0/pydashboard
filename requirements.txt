@@ -1,10 +1,9 @@
-py-term
-pyyaml
 durations
-requests
-octorest
-stransi
-psutil
-pandas
-libvirt-python
 feedparser
+libvirt-python
+octorest
+pandas
+psutil
+pyyaml
+requests
+textual

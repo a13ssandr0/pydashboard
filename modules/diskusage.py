@@ -42,21 +42,26 @@ _human = {
 
 class DiskUsage(BaseModule):
     def __init__(self, *, columns:list[str]=['device', 'fstype', 'total', 'used', 'free', 'percent', 'mountpoint'], 
-                 exclude:list[str]=None, human_readable=True, **kwargs):
+                 exclude:list[str]=None, human_readable=True, sizes:list[int]=None, **kwargs):
         self.columns=columns
         self.exclude=exclude
         self.human_readable=human_readable
+        self.sizes=sizes
         super().__init__(**kwargs)
         
     def __call__(self):
         partitions = [{**part._asdict(), **psutil.disk_usage(part.mountpoint)._asdict()} for part in psutil.disk_partitions() if not self.exclude or part.fstype not in self.exclude]
         
-        return mktable(table=DataFrame.from_dict(partitions), 
+        table = DataFrame.from_dict(partitions)
+        table['percent'] /= 100
+        
+        return mktable(table=table, 
                        humanize=_human if self.human_readable else None, 
                        column_names=_names_map,
                        justify=_justify, 
                        sortby='mountpoint', 
                        print_header=True,
-                       select_columns=self.columns)
+                       select_columns=self.columns,
+                       sizes=self.sizes)
     
 widget = DiskUsage
