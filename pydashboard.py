@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module, invalidate_caches, reload
 from pathlib import Path
 from typing import Any, cast
@@ -15,24 +15,18 @@ imported_modules = set()
         
         
 class MainApp(App):
-    CSS = """
-        Screen {
-            overflow: hidden hidden;
-        }
-    """
+    CSS = r"""Screen {overflow: hidden hidden;}"""
     
     ready_hooks = {}
     
     def compose(self):
-        with open(self.config) as file:
-            config = yaml.safe_load(file)
 
         invalidate_caches()
         for m in imported_modules: reload(m)
         
-        defaults = cast(dict[str, Any], config.get('defaults'))
+        defaults = cast(dict[str, Any], self.config.get('defaults'))
         
-        for key, conf in cast(dict[str,dict[str,Any]], config['mods']).items():
+        for key, conf in cast(dict[str,dict[str,Any]], self.config['mods']).items():
             if not conf.get('enabled', True): continue
             
             for k, v in defaults.items():
@@ -42,10 +36,10 @@ class MainApp(App):
             
             if 'position' in conf:
                 conf['window'] = {
-                    'y': sum(config['grid']['rows'][:conf['position']['top']]),
-                    'x': sum(config['grid']['columns'][:conf['position']['left']]),
-                    'h': sum(config['grid']['rows'][conf['position']['top']:conf['position']['top']+conf['position']['height']]),
-                    'w': sum(config['grid']['columns'][conf['position']['left']:conf['position']['left']+conf['position']['width']]),
+                    'y': sum(self.config['grid']['rows'][:conf['position']['top']]),
+                    'x': sum(self.config['grid']['columns'][:conf['position']['left']]),
+                    'h': sum(self.config['grid']['rows'][conf['position']['top']:conf['position']['top']+conf['position']['height']]),
+                    'w': sum(self.config['grid']['columns'][conf['position']['left']:conf['position']['left']+conf['position']['width']]),
                 }
             
             coords = Coordinates(conf['window']['h'], conf['window']['w'], conf['window'].get('y', 0), conf['window'].get('x', 0))
@@ -53,7 +47,7 @@ class MainApp(App):
             try:
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
-                widget:BaseModule = m.widget(coords=coords, id=key, **conf)
+                widget:BaseModule = m.widget(id=key, **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:
@@ -100,6 +94,7 @@ class MainApp(App):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('config', type=Path)
+    parser.add_argument('--debug', action=BooleanOptionalAction)
     args = parser.parse_args()
     
     # run_process(
@@ -109,7 +104,12 @@ if __name__ == "__main__":
     #     Path(__file__).parent/'basemod.py',
     #     target=reload_handler, args=args)
 
-    app = MainApp()
-    app.config = args.config
+    with open(args.config) as file:
+        config = yaml.safe_load(file)
+
+    app = MainApp(ansi_color=config.get('ansi_color', False))
+    app.config = config
     app.run()
-    input()
+    if args.debug:
+        #wait for user input to allow reading exceptions
+        input()

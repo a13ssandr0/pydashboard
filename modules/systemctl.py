@@ -141,13 +141,13 @@ class Systemctl(BaseModule):
     def __call__(self):
         out = ""
         # out += '[red]Services:[/red]' + '\n'
-        out += do_sysctl(self.content_width, *self.units) + '\n'
+        out += do_sysctl(self.content_size.width, *self.units) + '\n'
         if self.domain:
             out += '[red]VMs:[/red]' + '\n'
-            out += do_libvirt(self.content_width, self.domain) + '\n'
+            out += do_libvirt(self.content_size.width, self.domain) + '\n'
         out += '[red]Docker containers:[/red]' + '\n'
         try:
-            out += do_docker(self.content_width, ) + '\n'
+            out += do_docker(self.content_size.width, ) + '\n'
         except FileNotFoundError:
             out += '[yellow]Docker not installed[/yellow]'
         return out

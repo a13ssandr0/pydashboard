@@ -3,6 +3,7 @@ from re import compile
 
 import urllib3
 from requests import get
+from requests.exceptions import ConnectionError
 
 from basemod import BaseModule
 

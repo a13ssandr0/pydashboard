@@ -13,14 +13,14 @@ class CmdRunner(BaseModule):
         self.stderr_pipe=self.slave_fd if pipe_stderr else None
         super().__init__(**kwargs)
         if wraplines:
-            self.inner.styles.width = self.content_width
+            self.inner.styles.width = self.content_size.width
             
         self._screen = ''
     
     def __post_init__(self):
         env = os.environ
-        env['COLUMNS']= str(self.content_width)
-        env['LINES']= str(self.content_height)
+        env['COLUMNS']= str(self.content_size.width)
+        env['LINES']= str(self.content_size.height)
         
         proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe)
         

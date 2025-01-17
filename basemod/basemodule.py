@@ -6,7 +6,7 @@ from typing import NamedTuple
 from durations import Duration
 from rich.text import Text
 from textual.containers import ScrollableContainer
-from textual.css._style_properties import (BorderDefinition, ColorProperty,
+from textual.css._style_properties import (BorderProperty, ColorProperty,
                                            StyleFlagsProperty)
 from textual.css.types import AlignHorizontal, AlignVertical
 from textual.widgets import Static
@@ -22,13 +22,12 @@ class BaseModule(ScrollableContainer):
     inner = Static
     
     def __init__(self, *,
-                 coords:Coordinates,
                  id:str=None,
                  refreshInterval:int|float|str=None,
                  align_horizontal:AlignHorizontal="left",
                  align_vertical:AlignVertical="top",
                  color:ColorProperty=None,
-                 border:BorderDefinition=("round", "white"),
+                 border:BorderProperty=("round", "white"),
                  title:str=None,
                  title_align:AlignHorizontal="center",
                  title_background:ColorProperty=None,
@@ -43,9 +42,6 @@ class BaseModule(ScrollableContainer):
         """Init module and load config"""
         super().__init__(id=id)
         
-        self.content_width = coords.w
-        self.content_height = coords.h
-        
         if isinstance(refreshInterval, str):
             refreshInterval = Duration(refreshInterval).to_seconds()
         self.refreshInterval = refreshInterval
@@ -56,8 +52,6 @@ class BaseModule(ScrollableContainer):
         self.styles.color = color
         
         if border:
-            self.content_width -= 2
-            self.content_height -= 2
             self.styles.border = tuple(border) or "none"
             self.border_title = title if title is not None else self.__class__.__name__
             self.styles.border_title_align = title_align
@@ -92,7 +86,7 @@ class BaseModule(ScrollableContainer):
     def _update(self):
         try: self.update()
         except: self.notify(traceback.format_exc(), severity='error')
-        #     self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_height:]))
+        #     self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_size.height:]))
     
     def on_ready(self, signal:Event):
         try:

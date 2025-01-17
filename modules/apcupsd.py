@@ -33,6 +33,8 @@ class APCUPSd(BaseModule):
             status = self.get()
         except TimeoutError:
             return 'Connection timed out'
+        except ConnectionRefusedError:
+            return 'Offline or connection refused'
         
         if self.__model_as_title:
             self.border_title = status['MODEL']
