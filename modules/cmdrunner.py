@@ -17,7 +17,8 @@ class CmdRunner(BaseModule):
             
         self._screen = ''
     
-    def __post_init__(self):
+    # def __post_dinit__(self):
+    def run(self):
         env = os.environ
         env['COLUMNS']= str(self.content_size.width)
         env['LINES']= str(self.content_size.height)
@@ -47,6 +48,7 @@ class CmdRunner(BaseModule):
         # while os.re:
         #     o:=os.read(self.master_fd, 1024)
         #     output += o.decode()
+        self.run()
         return self._screen
         # thread = Thread(target = self.run_task)
         # thread.run()
