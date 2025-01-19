@@ -26,23 +26,23 @@ def do_docker(width:int):
         if l>max_len: max_len=l
 
     color_state = {
-        'created':    '[green]created[/green]',    #green
-        'restarting': '[yellow]restarting[/yellow]', #yellow
-        'running':    '[green]running[/green]',    #lime
-        'removing':   '[yellow]removing[/yellow]',   #yellow
-        'paused':     '[yellow]paused[/yellow]',     #yellow
-        'exited':     '[red]exited[/red]',     #red
-        'dead':       '[red]dead[/red]',       #red
+        'created':    '\033[0;32mcreated\033[0m',    #green
+        'restarting': '\033[0;93mrestarting\033[0m', #yellow
+        'running':    '\033[0;92mrunning\033[0m',    #lime
+        'removing':   '\033[0;93mremoving\033[0m',   #yellow
+        'paused':     '\033[0;93mpaused\033[0m',     #yellow
+        'exited':     '\033[0;31mexited\033[0m',     #red
+        'dead':       '\033[0;31mdead\033[0m',       #red
     }
 
 
-    docker_info = '''\
-Containers: {cont:>3}   Running: [green]{runn:>3}[/green]
- Images:    {imgs:>3}   Paused:  [yellow]{paus:>3}[/yellow]
- Volumes:   {vols:>3}   Stopped: [red]{stop:>3}[/red]
-Disk usage:       Containers: {cont_spc}
- Images: {imgs_spc:<8} Volumes:    {vols_spc}
-'''.format_map(dict(
+    docker_info = (
+        '''Containers: {cont:>3}   Running: \033[0;32m{runn:>3}\033[0m'''
+        ''' Images:    {imgs:>3}   Paused:  \033[0;93m{paus:>3}\033[0m'''
+        ''' Volumes:   {vols:>3}   Stopped: \033[0;31m{stop:>3}\033[0m'''
+        '''Disk usage:       Containers: {cont_spc}'''
+        ''' Images: {imgs_spc:<8} Volumes:    {vols_spc}'''
+    ).format_map(dict(
         cont=sys_info['Containers'], runn=sys_info['ContainersRunning'],
         imgs=sys_info['Images'],     paus=sys_info['ContainersPaused'],
         vols=len(vol_info),          stop=sys_info['ContainersStopped'],
@@ -66,15 +66,15 @@ def do_libvirt(width:int, hypervisor:str):
         libvirt.VIR_DOMAIN_PMSUSPENDED: 'pmsuspended',
     }
     color_state_map = {
-        'nostate':     '[white]nostate[/white]',
-        'running':     '[green]running[/green]',
-        'blocked':     '[magenta]blocked[/magenta]',
-        'paused':      '[magenta]paused[/magenta]',
-        'shutdown':    '[red]shutdown[/red]',
-        'shutoff':     '[red]shutoff[/red]',
-        'crashed':     '[white on red]crashed[/white on red]',
-        'pmsuspended': '[magenta]pmsuspended[/magenta]',
-        'unknown':     '[yellow]unknown[/yellow]',
+        'nostate':     '\033[0;97mnostate\033[0m',
+        'running':     '\033[0;92mrunning\033[0m',
+        'blocked':     '\033[0;35mblocked\033[0m',
+        'paused':      '\033[0;93mpaused\033[0m',
+        'shutdown':    '\033[0;31mshutdown\033[0m',
+        'shutoff':     '\033[0;31mshutoff\033[0m',
+        'crashed':     '\033[0;41mcrashed\033[0m',
+        'pmsuspended': '\033[0;93mpmsuspended\033[0m',
+        'unknown':     '\033[0;93munknown\033[0m',
     }
 
     with libvirt.open(hypervisor) as conn:
@@ -100,11 +100,11 @@ def sysctl_states_map(status):
     reds = ['abandoned', 'bad', 'bad-setting', 'dead', 'dead-before-auto-restart', 'dead-resources-pinned', 'error', 'failed', 'failed-before-auto-restart', 'not-found']
     
     if status in greens:
-        return f'[green]{status}[/green]'
+        return f'\033[0;92m{status}\033[0m'
     elif status in yellows:
-        return f'[yellow]{status}[/yellow]'
+        return f'\033[0;93m{status}\033[0m'
     elif status in reds:
-        return f'[red]{status}[/red]'
+        return f'\033[0;31m{status}\033[0m'
     else:
         return status
     
