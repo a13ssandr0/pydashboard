@@ -37,11 +37,11 @@ def do_docker(width:int):
 
 
     docker_info = (
-        '''Containers: {cont:>3}   Running: \033[0;32m{runn:>3}\033[0m'''
-        ''' Images:    {imgs:>3}   Paused:  \033[0;93m{paus:>3}\033[0m'''
-        ''' Volumes:   {vols:>3}   Stopped: \033[0;31m{stop:>3}\033[0m'''
-        '''Disk usage:       Containers: {cont_spc}'''
-        ''' Images: {imgs_spc:<8} Volumes:    {vols_spc}'''
+        '''Containers: {cont:>3}   Running: \033[0;32m{runn:>3}\033[0m\n'''
+        ''' Images:    {imgs:>3}   Paused:  \033[0;93m{paus:>3}\033[0m\n'''
+        ''' Volumes:   {vols:>3}   Stopped: \033[0;31m{stop:>3}\033[0m\n'''
+        '''Disk usage:       Containers: {cont_spc}\n'''
+        ''' Images: {imgs_spc:<8} Volumes:    {vols_spc}\n'''
     ).format_map(dict(
         cont=sys_info['Containers'], runn=sys_info['ContainersRunning'],
         imgs=sys_info['Images'],     paus=sys_info['ContainersPaused'],
