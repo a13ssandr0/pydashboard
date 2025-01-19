@@ -5,53 +5,82 @@ from basemod import TableModule
 from helpers import noneg
 from helpers.units import (duration_fmt, perc_fmt, sizeof_fmt, speedof_fmt,
                            time_fmt)
+from rich.text import Text
 
 states_map = {
-    'allocating':'A',
-    'downloading':'D',
-    'checkingDL':'CD',
-    'forcedDL':'FD',
-    'metaDL':'MD',
-    'pausedDL':'PD',
-    'queuedDL':'QD',
-    'stalledDL':'SD',
-    'error':'E',
-    'missingFiles':'MF',
-    'uploading':'U',
-    'checkingUP':'CU',
-    'forcedUP':'FU',
-    'pausedUP':'PU',
-    'queuedUP':'QU',
-    'stalledUP':'SU',
+    'allocating': 'A',
+    'downloading': 'D',
+    'checkingDL': 'CD',
+    'forcedDL': 'FD',
+    'metaDL': 'MD',
+    'pausedDL': 'PD',
+    'queuedDL': 'QD',
+    'stalledDL': 'SD',
+    'error': 'E',
+    'missingFiles': 'MF',
+    'uploading': 'U',
+    'checkingUP': 'CU',
+    'forcedUP': 'FU',
+    'pausedUP': 'PU',
+    'queuedUP': 'QU',
+    'stalledUP': 'SU',
     'queuedChecking': 'QC',
-    'checkingResumeData':'CR',
-    'moving':'MV',
-    'unknown':'?'
+    'checkingResumeData': 'CR',
+    'moving': 'MV',
+    'unknown': '?',
 }
+
+class Colors:
+    """ ANSI color codes """
+    BLACK = "\033[0;30m"
+    RED = "\033[0;31m"
+    GREEN = "\033[0;32m"
+    BROWN = "\033[0;33m"
+    BLUE = "\033[0;34m"
+    MAGENTA = "\033[0;35m"
+    CYAN = "\033[0;36m"
+    LIGHT_GRAY = "\033[0;37m"
+    DARK_GRAY = "\033[1;30m"
+    LIGHT_RED = "\033[1;31m"
+    LIGHT_GREEN = "\033[1;32m"
+    YELLOW = "\033[1;33m"
+    LIGHT_BLUE = "\033[1;34m"
+    LIGHT_PURPLE = "\033[1;35m"
+    LIGHT_CYAN = "\033[1;36m"
+    LIGHT_WHITE = "\033[1;37m"
+    BOLD = "\033[1m"
+    FAINT = "\033[2m"
+    ITALIC = "\033[3m"
+    UNDERLINE = "\033[4m"
+    BLINK = "\033[5m"
+    NEGATIVE = "\033[7m"
+    CROSSED = "\033[9m"
+    END = "\033[0m"
 
 
 colors_map = {
-    "allocating": 'green',
-    "downloading": 'green',
-    "checkingDL": 'yellow',
-    "forcedDL": 'cyan',
-    "metaDL": 'blue',
-    "pausedDL": 'darkgray',
-    "queuedDL": 'blue',
-    "stalledDL": 'yellow',
-    "error": 'red',
-    "missingFiles": 'red',
-    "uploading": 'green',
-    "checkingUP": 'yellow',
-    "forcedUP": 'cyan',
-    "pausedUP": 'darkgray',
-    "queuedUP": 'blue',
-    "stalledUP": 'yellow',
-    "queuedChecking": 'blue',
-    "checkingResumeData": 'yellow',
-    "moving": 'green',
-    "unknown": 'magenta'
+    "A": Colors.GREEN,
+    "D": Colors.GREEN,
+    "CD": Colors.YELLOW,
+    "FD": Colors.CYAN,
+    "MD": Colors.BLUE,
+    "PD": Colors.DARK_GRAY,
+    "QD": Colors.BLUE,
+    "SD": Colors.YELLOW,
+    "E": Colors.RED,
+    "MF": Colors.RED,
+    "U": Colors.GREEN,
+    "CU": Colors.YELLOW,
+    "FU": Colors.CYAN,
+    "PU": Colors.DARK_GRAY,
+    "QU": Colors.BLUE,
+    "SU": Colors.YELLOW,
+    "QC": Colors.BLUE,
+    "CR": Colors.YELLOW,
+    "MV": Colors.GREEN,
+    "?": Colors.MAGENTA
 }
+
 
 
 _justify = {
@@ -153,8 +182,8 @@ _human = {
 }
 
 def colorize(state):
-    c=colors_map.get(state, colors_map['unknown'])
-    return f'[{c}]{state}[/{c}]'
+    c=colors_map.get(state, colors_map['?'])
+    return Text.from_ansi(f'{c}{state}{Colors.END}').markup
 
 
 class BitTorrent(TableModule):
