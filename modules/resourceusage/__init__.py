@@ -2,16 +2,18 @@ import psutil as ps
 from psutil._common import bytes2human as b2h
 
 from basemod import BaseModule
+from modules.resourceusage.nvidia import get_gpu_data
 
 from .cpu import get_cpu_data
 
 
 class ResourceUsage(BaseModule):
-    def __init__(self, *, cpuCombined, showCPU, showMem, showSwp, **kwargs):
+    def __init__(self, *, cpuCombined, showCPU, showMem, showSwp, showGPU, **kwargs):
         self.cpuCombined = cpuCombined
         self.showCPU = showCPU
         self.showMem = showMem
         self.showSwp = showSwp
+        self.showGPU = showGPU
         super().__init__(**kwargs)
         
     def __call__(self):
@@ -27,6 +29,9 @@ class ResourceUsage(BaseModule):
         if self.showSwp:
             smem = ps.swap_memory()
             bars.append([smem.percent, f'{b2h(smem.used)}/{b2h(smem.total)}', 'Swp', 'green'])
+        
+        if self.showGPU:
+            bars.extend(get_gpu_data())
         
         return '\n'.join([createBar(max_w=self.content_size.width, 
                                     perc=perc, text=text, 

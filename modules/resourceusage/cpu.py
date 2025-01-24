@@ -10,7 +10,7 @@ def get_cpu_data(cpuCombined):
         temp = combine_temps([t for t in ps.sensors_temperatures()['coretemp'] if t.label.startswith('Package')])
         freq = round(ps.cpu_freq().current) 
         
-        text = f'{round(perc, int(perc < 100))}% {freq}MHz {temp}°C'
+        text = f'{round(perc, int(perc < 100))}% {freq:>4}MHz {temp}°C'
         bars.append([perc, text, 'CPU', 'red'])
     else:
         perc = ps.cpu_percent(percpu=True)
@@ -18,10 +18,10 @@ def get_cpu_data(cpuCombined):
         freq = [round(f.current) for f in ps.cpu_freq(percpu=True)]
         
         for i, (p, f) in enumerate(zip(perc, freq)):
-            text = f'{round(p, int(p < 100))}% {f}MHz'
+            text = f'{round(p, int(p < 100))}% {f:>4}MHz'
             t = temp.get(i)
             if t is not None: text += f' {t}°C'
-            else: text += ' N/A'
+            else: text += '  N/A'
             bars.append([p, text, str(i), 'red'])
             
     return bars
