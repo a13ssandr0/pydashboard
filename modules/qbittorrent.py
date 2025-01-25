@@ -6,6 +6,8 @@ from helpers import noneg
 from helpers.units import (duration_fmt, perc_fmt, sizeof_fmt, speedof_fmt,
                            time_fmt)
 from rich.text import Text
+from colorama import Fore, Style
+
 
 states_map = {
     'allocating': 'A',
@@ -30,55 +32,28 @@ states_map = {
     'unknown': '?',
 }
 
-class Colors:
-    """ ANSI color codes """
-    BLACK = "\033[0;30m"
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    BROWN = "\033[0;33m"
-    BLUE = "\033[0;34m"
-    MAGENTA = "\033[0;35m"
-    CYAN = "\033[0;36m"
-    LIGHT_GRAY = "\033[0;37m"
-    DARK_GRAY = "\033[1;30m"
-    LIGHT_RED = "\033[1;31m"
-    LIGHT_GREEN = "\033[1;32m"
-    YELLOW = "\033[1;33m"
-    LIGHT_BLUE = "\033[1;34m"
-    LIGHT_PURPLE = "\033[1;35m"
-    LIGHT_CYAN = "\033[1;36m"
-    LIGHT_WHITE = "\033[1;37m"
-    BOLD = "\033[1m"
-    FAINT = "\033[2m"
-    ITALIC = "\033[3m"
-    UNDERLINE = "\033[4m"
-    BLINK = "\033[5m"
-    NEGATIVE = "\033[7m"
-    CROSSED = "\033[9m"
-    END = "\033[0m"
-
 
 colors_map = {
-    "A": Colors.GREEN,
-    "D": Colors.GREEN,
-    "CD": Colors.YELLOW,
-    "FD": Colors.CYAN,
-    "MD": Colors.BLUE,
-    "PD": Colors.DARK_GRAY,
-    "QD": Colors.BLUE,
-    "SD": Colors.YELLOW,
-    "E": Colors.RED,
-    "MF": Colors.RED,
-    "U": Colors.GREEN,
-    "CU": Colors.YELLOW,
-    "FU": Colors.CYAN,
-    "PU": Colors.DARK_GRAY,
-    "QU": Colors.BLUE,
-    "SU": Colors.YELLOW,
-    "QC": Colors.BLUE,
-    "CR": Colors.YELLOW,
-    "MV": Colors.GREEN,
-    "?": Colors.MAGENTA
+    "A": Fore.GREEN,
+    "D": Fore.GREEN,
+    "CD": Fore.YELLOW,
+    "FD": Fore.CYAN,
+    "MD": Fore.BLUE,
+    "PD": Style.BRIGHT + Fore.BLACK,
+    "QD": Fore.BLUE,
+    "SD": Fore.YELLOW,
+    "E": Fore.RED,
+    "MF": Fore.RED,
+    "U": Fore.GREEN,
+    "CU": Fore.YELLOW,
+    "FU": Fore.CYAN,
+    "PU": Style.BRIGHT + Fore.BLACK,
+    "QU": Fore.BLUE,
+    "SU": Fore.YELLOW,
+    "QC": Fore.BLUE,
+    "CR": Fore.YELLOW,
+    "MV": Fore.GREEN,
+    "?": Fore.MAGENTA
 }
 
 
@@ -183,7 +158,7 @@ _human = {
 
 def colorize(state):
     c=colors_map.get(state, colors_map['?'])
-    return Text.from_ansi(f'{c}{state}{Colors.END}').markup
+    return Text.from_ansi(f'{c}{state}{Style.RESET_ALL}').markup
 
 
 class BitTorrent(TableModule):

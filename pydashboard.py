@@ -1,19 +1,18 @@
 from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module, invalidate_caches, reload
 from pathlib import Path
+from threading import Event, Thread
 from typing import Any, cast
-from threading import Thread
 
 import yaml
 from textual.app import App
-from threading import Event
 
 from basemod import BaseModule, Coordinates, ErrorModule
 
 imported_modules = set()
 
-        
-        
+
+
 class MainApp(App):
     CSS = r"""Screen {overflow: hidden hidden;}"""
     

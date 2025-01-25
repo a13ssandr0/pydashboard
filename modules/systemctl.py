@@ -4,6 +4,7 @@ import subprocess
 from os.path import splitext
 
 import libvirt
+from colorama import Back, Fore, Style
 
 from basemod import BaseModule
 
@@ -26,20 +27,20 @@ def do_docker(width:int):
         if l>max_len: max_len=l
 
     color_state = {
-        'created':    '\033[0;32mcreated\033[0m',    #green
-        'restarting': '\033[0;93mrestarting\033[0m', #yellow
-        'running':    '\033[0;92mrunning\033[0m',    #lime
-        'removing':   '\033[0;93mremoving\033[0m',   #yellow
-        'paused':     '\033[0;93mpaused\033[0m',     #yellow
-        'exited':     '\033[0;31mexited\033[0m',     #red
-        'dead':       '\033[0;31mdead\033[0m',       #red
+        'created':    f'{Fore.GREEN}created{Style.RESET_ALL}',    
+        'restarting': f'{Fore.LIGHTYELLOW_EX}restarting{Style.RESET_ALL}', 
+        'running':    f'{Fore.LIGHTGREEN_EX}running{Style.RESET_ALL}',    
+        'removing':   f'{Fore.LIGHTYELLOW_EX}removing{Style.RESET_ALL}',   
+        'paused':     f'{Fore.LIGHTYELLOW_EX}paused{Style.RESET_ALL}',     
+        'exited':     f'{Fore.RED}exited{Style.RESET_ALL}',     
+        'dead':       f'{Fore.RED}dead{Style.RESET_ALL}',       
     }
 
 
     docker_info = (
-        '''Containers: {cont:>3}   Running: \033[0;32m{runn:>3}\033[0m\n'''
-        ''' Images:    {imgs:>3}   Paused:  \033[0;93m{paus:>3}\033[0m\n'''
-        ''' Volumes:   {vols:>3}   Stopped: \033[0;31m{stop:>3}\033[0m\n'''
+        '''Containers: {cont:>3}   Running: {grn}{runn:>3}{reset}\n'''
+        ''' Images:    {imgs:>3}   Paused:  {ylw}{paus:>3}{reset}\n'''
+        ''' Volumes:   {vols:>3}   Stopped: {red}{stop:>3}{reset}\n'''
         '''Disk usage:       Containers: {cont_spc}\n'''
         ''' Images: {imgs_spc:<8} Volumes:    {vols_spc}\n'''
     ).format_map(dict(
@@ -48,6 +49,7 @@ def do_docker(width:int):
         vols=len(vol_info),          stop=sys_info['ContainersStopped'],
         cont_spc=sys_df['Containers']['Size'], imgs_spc=sys_df['Images']['Size'],
         vols_spc=sys_df['Local Volumes']['Size'],
+        grn=Fore.GREEN, ylw=Fore.LIGHTYELLOW_EX, red=Fore.RED, reset=Style.RESET_ALL
     )) + \
     '\n'.join([f'{c['Names'][:width-max_len-1].ljust(width-max_len-1)} {color_state.get(c['State'], c['State'])}' for c in ctr_info])
 
@@ -66,15 +68,15 @@ def do_libvirt(width:int, hypervisor:str):
         libvirt.VIR_DOMAIN_PMSUSPENDED: 'pmsuspended',
     }
     color_state_map = {
-        'nostate':     '\033[0;97mnostate\033[0m',
-        'running':     '\033[0;92mrunning\033[0m',
-        'blocked':     '\033[0;35mblocked\033[0m',
-        'paused':      '\033[0;93mpaused\033[0m',
-        'shutdown':    '\033[0;31mshutdown\033[0m',
-        'shutoff':     '\033[0;31mshutoff\033[0m',
-        'crashed':     '\033[0;41mcrashed\033[0m',
-        'pmsuspended': '\033[0;93mpmsuspended\033[0m',
-        'unknown':     '\033[0;93munknown\033[0m',
+        'nostate':     f'{Fore.LIGHTWHITE_EX}nostate{Style.RESET_ALL}',
+        'running':     f'{Fore.LIGHTGREEN_EX}running{Style.RESET_ALL}',
+        'blocked':     f'{Fore.MAGENTA}blocked{Style.RESET_ALL}',
+        'paused':      f'{Fore.LIGHTYELLOW_EX}paused{Style.RESET_ALL}',
+        'shutdown':    f'{Fore.RED}shutdown{Style.RESET_ALL}',
+        'shutoff':     f'{Fore.RED}shutoff{Style.RESET_ALL}',
+        'crashed':     f'{Back.RED}crashed{Style.RESET_ALL}',
+        'pmsuspended': f'{Fore.LIGHTYELLOW_EX}pmsuspended{Style.RESET_ALL}',
+        'unknown':     f'{Fore.LIGHTYELLOW_EX}unknown{Style.RESET_ALL}',
     }
 
     with libvirt.open(hypervisor) as conn:
@@ -100,11 +102,11 @@ def sysctl_states_map(status):
     reds = ['abandoned', 'bad', 'bad-setting', 'dead', 'dead-before-auto-restart', 'dead-resources-pinned', 'error', 'failed', 'failed-before-auto-restart', 'not-found']
     
     if status in greens:
-        return f'\033[0;92m{status}\033[0m'
+        return f'{Fore.LIGHTGREEN_EX}{status}{Style.RESET_ALL}'
     elif status in yellows:
-        return f'\033[0;93m{status}\033[0m'
+        return f'{Fore.LIGHTYELLOW_EX}{status}{Style.RESET_ALL}'
     elif status in reds:
-        return f'\033[0;31m{status}\033[0m'
+        return f'{Fore.RED}{status}{Style.RESET_ALL}'
     else:
         return status
     

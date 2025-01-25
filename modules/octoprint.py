@@ -1,6 +1,3 @@
-from datetime import datetime
-from sys import argv
-
 from octorest import OctoRest
 
 from basemod import BaseModule
