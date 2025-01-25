@@ -44,8 +44,8 @@ class FeedReader(TableModule):
                     for entry in feed.entries:
                         entry['source']=feed.feed.title
                         # news.append(entry)
-                    self.__cache[feed_url] = feed
-                    news.extend(feed)
+                    self.__cache[feed_url] = feed.entries
+                    news.extend(feed.entries)
                 else:
                     self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
                     news.extend(self.__cache[feed_url])
