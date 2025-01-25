@@ -2,6 +2,7 @@ from time import strftime
 
 import feedparser
 from pandas import DataFrame
+from requests.exceptions import ConnectionError
 
 from basemod import TableModule
 
@@ -16,6 +17,8 @@ class FeedReader(TableModule):
         'published_parsed': lambda t: f"[yellow]{t}[/yellow]",
         'source': lambda t: f"[green]{t}[/green]"
     }
+    
+    __cache = {}
     
     def __init__(self, *, feeds:list[str], showSource=True, showPublishDate=True, showIndex=False, limit=20, **kwargs):
         self.feeds=feeds
@@ -34,14 +37,21 @@ class FeedReader(TableModule):
         
     def __call__(self):
         news = []
-        for feed in self.feeds:
-            feed = feedparser.parse(feed)
-            if feed.status == 200:
-                for entry in feed.entries:
-                    entry['source']=feed.feed.title
-                    news.append(entry)
-            else:
-                self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
+        for feed_url in self.feeds:
+            try:
+                feed = feedparser.parse(feed_url)
+                if feed.status == 200:
+                    for entry in feed.entries:
+                        entry['source']=feed.feed.title
+                        # news.append(entry)
+                    self.__cache[feed_url] = feed
+                    news.extend(feed)
+                else:
+                    self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
+                    news.extend(self.__cache[feed_url])
+            except ConnectionError:
+                self.notify(f"Failed to get RSS feed {feed.url}. Connection error", severity="warning")
+                news.extend(self.__cache[feed_url])
         
         df = DataFrame.from_dict(news).sort_values('published_parsed', ascending=False).reset_index()
         del df['index']

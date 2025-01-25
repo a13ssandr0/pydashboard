@@ -1,3 +1,4 @@
+colorama
 durations
 feedparser
 libvirt-python

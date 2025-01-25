@@ -1,10 +1,14 @@
-from basemod import BaseModule
+from urllib.parse import quote
 
 import requests
-from urllib.parse import quote
+from requests.exceptions import ConnectionError
+
+from basemod import BaseModule
 
 
 class Weather(BaseModule):
+    __cache = ''
+    
     def __init__(self, location:str, language:str=None,
                  narrow=False, metric:bool|None=None, speed_in_m_s=False,
                  today_forecast=False, tomorrow_forecast=False,
@@ -61,8 +65,10 @@ class Weather(BaseModule):
         
     def __call__(self):
         try:
-            return requests.get(self.url, headers=self.headers).text
+            self.__cache = requests.get(self.url, headers=self.headers).text
         except ConnectionError:
             pass
+        
+        return self.__cache
     
 widget = Weather
