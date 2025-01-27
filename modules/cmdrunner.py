@@ -1,9 +1,10 @@
-from shlex import split
-from basemod import BaseModule
-from subprocess import run
-import os, pty
+import os
+import pty
 from select import select
+from shlex import split
+from subprocess import run
 
+from basemod import BaseModule
 
 
 class CmdRunner(BaseModule):
@@ -19,7 +20,6 @@ class CmdRunner(BaseModule):
             
         self._screen = ''
     
-    # def __post_dinit__(self):
     def run(self):
         env = os.environ
         env['COLUMNS']= str(self.content_size.width)
@@ -41,19 +41,12 @@ class CmdRunner(BaseModule):
                     # The program has exited, and we have read everything written to stdout
                     ready = filter(lambda x: x is not self.master_fd, ready)
 
-            # if proc.poll() is not None and not ready:
             if not ready:
                 break
 
     def __call__(self):
-        # output = ''
-        # while os.re:
-        #     o:=os.read(self.master_fd, 1024)
-        #     output += o.decode()
         self.run()
         return self._screen
-        # thread = Thread(target = self.run_task)
-        # thread.run()
 
     
 widget = CmdRunner

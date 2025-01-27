@@ -65,10 +65,7 @@ class TableModule(BaseModule):
      
     def on_ready(self, signal):
         if self.inner.show_header:
-            if self.column_names:
-                columns = [self.column_names.get(col, col) for col in self.columns]
-            else:
-                columns = self.columns
+            columns = [Text(self.column_names.get(col, col), justify=self.justify.get(col, "left")) for col in self.columns]
         else:
             columns = [''] * len(self.columns)
             
