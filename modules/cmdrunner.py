@@ -1,3 +1,4 @@
+from shlex import split
 from basemod import BaseModule
 from subprocess import run
 import os, pty
@@ -6,8 +7,9 @@ from select import select
 
 
 class CmdRunner(BaseModule):
-    def __init__(self, *, args:list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, **kwargs):
-        self.args=args
+    def __init__(self, *, args:str|list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, shell=False, **kwargs):
+        self.args=args if shell or isinstance(args, list) else split(args)
+        self.shell=shell
         self.master_fd, self.slave_fd = pty.openpty()
         self.stdout_pipe=self.slave_fd if pipe_stdout else None
         self.stderr_pipe=self.slave_fd if pipe_stderr else None
@@ -23,7 +25,7 @@ class CmdRunner(BaseModule):
         env['COLUMNS']= str(self.content_size.width)
         env['LINES']= str(self.content_size.height)
         
-        proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe)
+        proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe, shell=self.shell)
         
         self._screen = ''
         
