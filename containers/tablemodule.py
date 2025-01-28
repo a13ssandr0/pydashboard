@@ -21,6 +21,7 @@ class TableModule(BaseModule):
                  sort:str|tuple[str,bool]|list[str|tuple[str,bool]]|None=None,
                  sizes:list[int]=[0],
                  **kwargs):
+        super().__init__(**kwargs)
         self.columns=columns
         self.sizes=sizes + [0]*(len(columns)-len(sizes))
         self.sortby =  None
@@ -44,7 +45,6 @@ class TableModule(BaseModule):
                         self.sortby.append(e)
                         self.reverse.append(False)
                         
-        super().__init__(**kwargs)
         self.inner.show_header=show_header
         self.inner.show_cursor=False
         self.inner.cell_padding=0

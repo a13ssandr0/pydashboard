@@ -4,12 +4,12 @@ from containers import BaseModule
 
 class Clock(BaseModule):
     def __init__(self, *, font:str='bigFont', format:str=None, compact=False, showSeconds=False, **kwargs):
+        super().__init__(**kwargs)
         self.font = fonts.get(font, fonts['bigFont'])
         self.format=format
         self.compact=compact
         self.bf1="%H:%M:%S" if showSeconds else "%H:%M"
         self.bf2="%H %M %S" if showSeconds else "%H %M"
-        super().__init__(**kwargs)
         
     def __call__(self):
         now = datetime.now()

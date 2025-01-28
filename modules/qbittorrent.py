@@ -170,15 +170,13 @@ class BitTorrent(TableModule):
                  sort:str|tuple[str,bool]|list[str|tuple[str,bool]]=('downloaded', False),
                  human_readable=True, show_header=False,
                  **kwargs):
+        super().__init__(columns=columns, show_header=show_header, sort=sort, **kwargs)
         self.host=host
         self.username=username
         self.password=password
         self.port=port
         self.scheme=scheme
         self.humanize = _human if human_readable else None
-            
-        super().__init__(columns=columns, show_header=show_header, sort=sort, **kwargs)
-        
         self.referer = f'{scheme}://{host}:{port}'
         self.url = f'{scheme}://{host}:{port}/api/v2/auth/login'
         

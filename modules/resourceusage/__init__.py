@@ -9,12 +9,12 @@ from .cpu import get_cpu_data
 
 class ResourceUsage(BaseModule):
     def __init__(self, *, cpuCombined, showCPU, showMem, showSwp, showGPU, **kwargs):
+        super().__init__(**kwargs)
         self.cpuCombined = cpuCombined
         self.showCPU = showCPU
         self.showMem = showMem
         self.showSwp = showSwp
         self.showGPU = showGPU
-        super().__init__(**kwargs)
         
     def __call__(self):
         bars = []

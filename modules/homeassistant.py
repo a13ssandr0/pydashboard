@@ -23,6 +23,7 @@ def color_state(state):
 
 class HomeAssistant(BaseModule):
     def __init__(self, *, host, token, filters:list[str], port=8123, scheme='https', **kwargs):
+        super().__init__(**kwargs)
         self.host=host
         self.token=token
         self.filters=filters
@@ -33,7 +34,6 @@ class HomeAssistant(BaseModule):
             "Authorization": f"Bearer {token}",
             "content-type": "application/json",
         }
-        super().__init__(**kwargs)
         
     def __call__(self):
         try:

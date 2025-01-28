@@ -22,11 +22,11 @@ ALL_UNITS = (
 
 class APCUPSd(BaseModule):
     def __init__(self, *, title=None, host="localhost", port=3551, timeout=30, **kwargs):
+        super().__init__(title=title, **kwargs)
         self.host=host
         self.port=port
         self.timeout=timeout
         self.__model_as_title = title is None
-        super().__init__(title=title, **kwargs)
         
     def __call__(self):
         try:

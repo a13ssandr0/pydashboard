@@ -45,9 +45,9 @@ class DiskUsage(TableModule):
     def __init__(self, *, columns:list[str]=['device', 'fstype', 'total', 'used', 'free', 'percent', 'mountpoint'], 
                  sort:str|tuple[str,bool]|list[str|tuple[str,bool]]|None='mountpoint',
                  exclude:list[str]=None, human_readable=True, sizes:list[int]=None, **kwargs):
+        super().__init__(columns=columns, show_header=True, sizes=sizes, sort=sort, **kwargs)
         self.exclude=exclude
         self.humanize = _human if human_readable else None
-        super().__init__(columns=columns, show_header=True, sizes=sizes, sort=sort, **kwargs)
         
     def __call__(self):
         partitions = [{**part._asdict(), **psutil.disk_usage(part.mountpoint)._asdict()} for part in psutil.disk_partitions() if not self.exclude or part.fstype not in self.exclude]

@@ -21,8 +21,6 @@ class FeedReader(TableModule):
     __cache = {}
     
     def __init__(self, *, feeds:list[str], showSource=True, showPublishDate=True, showIndex=False, limit=20, **kwargs):
-        self.feeds=feeds
-        
         columns = []
         if showIndex:
             columns.append('index')
@@ -31,9 +29,11 @@ class FeedReader(TableModule):
         if showPublishDate:
             columns.append('published_parsed')
         columns.append('title')
-            
-        self.limit=limit
+    
         super().__init__(columns=columns, show_header=False, **kwargs)          
+            
+        self.feeds=feeds
+        self.limit=limit
         
     def __call__(self):
         news = []

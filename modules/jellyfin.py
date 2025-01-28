@@ -12,6 +12,7 @@ def tick_to_seconds(ticks): return ticks / 10_000_000
 
 class Jellyfin(BaseModule):
     def __init__(self, *, host, token, port=None, scheme='https', **kwargs):
+        super().__init__(**kwargs)
         self.host=host
         self.token=token
         self.port=port
@@ -24,7 +25,6 @@ class Jellyfin(BaseModule):
         self.url += '/Sessions?activeWithinSeconds=120'
         
         self.headers = {"Authorization": f"MediaBrowser Token={token}"}
-        super().__init__(**kwargs)
         
     def __call__(self):
         try:

@@ -14,6 +14,7 @@ class Weather(BaseModule):
                  today_forecast=False, tomorrow_forecast=False,
                  quiet=True, show_city=False, no_colors=False, console_glyphs=False,
                  **kwargs):
+        super().__init__(**kwargs)
         self.location = quote(location)
         self.language = language
         self.narrow = narrow
@@ -60,7 +61,6 @@ class Weather(BaseModule):
         if language:
             self.headers['Accept-Language'] = language
         
-        super().__init__(**kwargs)
         
         
     def __call__(self):

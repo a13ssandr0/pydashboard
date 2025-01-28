@@ -5,12 +5,12 @@ from containers import BaseModule
 
 class Octoprint(BaseModule):
     def __init__(self, *, host, token, port=80, scheme='http', subtitle=None, subtitle_align=None, subtitle_background=None, subtitle_color=None, subtitle_style=None, **kwargs):
+        super().__init__(**kwargs)
         self.host=host
         self.token=token
         self.port=port
         self.scheme=scheme
         self.url = f'{scheme}://{host}:{port}'
-        super().__init__(**kwargs)
         self.styles.border_subtitle_align = 'left'
         
     def __call__(self):

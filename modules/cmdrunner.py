@@ -9,13 +9,13 @@ from containers import BaseModule
 
 class CmdRunner(BaseModule):
     def __init__(self, *, args:str|list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, shell=False, **kwargs):
+        super().__init__(**kwargs)
         self.args=args if shell or isinstance(args, list) else split(args)
         self.shell=shell
         self.master_fd, self.slave_fd = pty.openpty()
         self.stdout_pipe=self.slave_fd if pipe_stdout else None
         self.stderr_pipe=self.slave_fd if pipe_stderr else None
         self.wraplines=wraplines
-        super().__init__(**kwargs)
         self._screen = ''
     
     def __post_init__(self):
