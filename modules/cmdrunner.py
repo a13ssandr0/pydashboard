@@ -14,11 +14,13 @@ class CmdRunner(BaseModule):
         self.master_fd, self.slave_fd = pty.openpty()
         self.stdout_pipe=self.slave_fd if pipe_stdout else None
         self.stderr_pipe=self.slave_fd if pipe_stderr else None
+        self.wraplines=wraplines
         super().__init__(**kwargs)
-        if wraplines:
-            self.inner.styles.width = self.content_size.width
-            
         self._screen = ''
+    
+    def __post_init__(self):
+        if self.wraplines:
+            self.inner.styles.width = self.content_size.width
     
     def run(self):
         env = os.environ
