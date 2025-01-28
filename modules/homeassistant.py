@@ -5,7 +5,7 @@ import urllib3
 from requests import get
 from requests.exceptions import ConnectionError
 
-from basemod import BaseModule
+from containers import BaseModule
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

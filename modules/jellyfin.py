@@ -4,7 +4,7 @@ from colorama import Fore, Style
 from requests import get
 from requests.exceptions import ConnectionError
 
-from basemod import BaseModule
+from containers import BaseModule
 from helpers.units import duration_fmt
 
 

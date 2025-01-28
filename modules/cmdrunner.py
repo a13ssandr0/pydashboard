@@ -4,7 +4,7 @@ from select import select
 from shlex import split
 from subprocess import run
 
-from basemod import BaseModule
+from containers import BaseModule
 
 
 class CmdRunner(BaseModule):

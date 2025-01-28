@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from requests import JSONDecodeError, Session
 
-from basemod import TableModule
+from containers import TableModule
 from helpers import noneg
 from helpers.units import (duration_fmt, perc_fmt, sizeof_fmt, speedof_fmt,
                            time_fmt)

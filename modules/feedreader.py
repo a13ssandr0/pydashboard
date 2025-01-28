@@ -4,7 +4,7 @@ import feedparser
 from pandas import DataFrame
 from requests.exceptions import ConnectionError
 
-from basemod import TableModule
+from containers import TableModule
 
 
 class FeedReader(TableModule):

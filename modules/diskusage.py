@@ -1,7 +1,7 @@
 import psutil
 from pandas import DataFrame
 
-from basemod import TableModule
+from containers import TableModule
 from helpers.units import perc_fmt, sizeof_fmt
 
 _names_map = {

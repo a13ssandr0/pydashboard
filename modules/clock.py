@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from basemod import BaseModule
+from containers import BaseModule
 
 class Clock(BaseModule):
     def __init__(self, *, font:str='bigFont', format:str=None, compact=False, showSeconds=False, **kwargs):

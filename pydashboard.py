@@ -7,7 +7,7 @@ from typing import Any, cast
 import yaml
 from textual.app import App
 
-from basemod import BaseModule, Coordinates, ErrorModule
+from containers import BaseModule, Coordinates, ErrorModule
 
 imported_modules = set()
 

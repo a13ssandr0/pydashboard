@@ -3,7 +3,7 @@ from urllib.parse import quote
 import requests
 from requests.exceptions import ConnectionError
 
-from basemod import BaseModule
+from containers import BaseModule
 
 
 class Weather(BaseModule):

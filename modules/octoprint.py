@@ -1,6 +1,6 @@
 from octorest import OctoRest
 
-from basemod import BaseModule
+from containers import BaseModule
 
 
 class Octoprint(BaseModule):
