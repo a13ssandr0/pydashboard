@@ -1,4 +1,5 @@
 import traceback
+from re import sub
 from threading import Event
 from time import sleep
 from typing import NamedTuple
@@ -40,6 +41,9 @@ class BaseModule(ScrollableContainer):
                  subtitle_style:StyleFlagsProperty=None,
                  **kwargs):
         """Init module and load config"""
+        id=sub(r"[^\w\d\-_]", "_", id)
+        if id[0].isdigit(): id = "_"+id
+        
         super().__init__(id=id)
         
         if isinstance(refreshInterval, str):
@@ -74,7 +78,7 @@ class BaseModule(ScrollableContainer):
 
     def __call__(self) -> str:
         """Method called each time the module has to be updated"""
-        raise NotImplementedError('Stub')
+        pass
     
     def update(self):
         result = self()

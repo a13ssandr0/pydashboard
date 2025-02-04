@@ -23,15 +23,17 @@ class MainApp(App):
         invalidate_caches()
         for m in imported_modules: reload(m)
         
-        defaults = cast(dict[str, Any], self.config.get('defaults'))
+        defaults = cast(dict[str, Any], self.config.get('defaults', {}))
         
-        for key, conf in cast(dict[str,dict[str,Any]], self.config['mods']).items():
+        for w_id, conf in cast(dict[str,dict[str,Any]], self.config['mods']).items():
+            if conf is None: conf = {}
+            
             if not conf.get('enabled', True): continue
             
             for k, v in defaults.items():
                 conf.setdefault(k ,v)
             
-            mod = conf.get('type', key)
+            mod = conf.get('type', w_id.split('%')[0])
             
             if 'position' in conf:
                 conf['window'] = {
@@ -46,7 +48,7 @@ class MainApp(App):
             try:
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
-                widget:BaseModule = m.widget(id=key, **conf)
+                widget:BaseModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:
@@ -64,9 +66,12 @@ class MainApp(App):
             yield widget
 
             try:
-                self.ready_hooks[key] = widget.on_ready
+                self.ready_hooks[w_id] = widget.on_ready
             except AttributeError:
                 pass
+            
+            if hasattr(widget, 'ready_hooks'):
+                self.ready_hooks.update(widget.ready_hooks)
 
     def on_ready(self):
         self.signal = Event()
