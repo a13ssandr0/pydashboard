@@ -18,8 +18,9 @@ class Vstack(BaseModule):
                  order:list[str]|None=[], **kwargs):
         super().__init__(**kwargs)
         self.order = order
-        
         self.modules = OrderedDict()
+        
+        defaults['refreshInterval'] = self.refreshInterval
         
         for w_id, conf in mods.items():
             if conf is None: conf = {}
