@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from importlib import import_module
 from typing import Any
 
@@ -14,10 +15,11 @@ class Vstack(BaseModule):
     
     def __init__(self, *, mods:dict[str,dict[str,Any]], 
                  defaults:dict[str, Any]={}, 
-                 order:list[str]|None=None, **kwargs):
+                 order:list[str]|None=[], **kwargs):
         super().__init__(**kwargs)
+        self.order = order
         
-        self.modules = []
+        self.modules = OrderedDict()
         
         for w_id, conf in mods.items():
             if conf is None: conf = {}
@@ -28,12 +30,12 @@ class Vstack(BaseModule):
                 conf.setdefault(k ,v)
             
             mod = conf.get('type', w_id.split('%')[0])
-            w_id = self.id + '-' + w_id
+            full_w_id = self.id + '-' + w_id
             
             try:
                 m = import_module('modules.'+mod)
                 # imported_modules.add(m)
-                widget:BaseModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
+                widget:BaseModule = m.widget(id=full_w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:
@@ -43,10 +45,10 @@ class Vstack(BaseModule):
             widget.styles.height = "auto"
             widget.styles.overflow_x = "hidden"
             # widget.styles.overflow_y = "hidden"
-            self.modules.append(widget)
+            self.modules[w_id] = widget
 
             try:
-                self.ready_hooks[w_id] = widget.on_ready
+                self.ready_hooks[full_w_id] = widget.on_ready
             except AttributeError:
                 pass
     
@@ -57,7 +59,7 @@ class Vstack(BaseModule):
     def on_ready(self, _): pass
     
     def compose(self):
-        self.inner = VerticalGroup(*self.modules)
+        self.inner = VerticalGroup(*[self.modules.pop(mod) for mod in self.order if mod in self.modules], *self.modules.values())
         self.inner.styles.width = "100%"
         self.inner.styles.height = "100%"
         yield self.inner
