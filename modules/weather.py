@@ -57,7 +57,7 @@ class Weather(BaseModule):
         if speed_in_m_s:
             self.url += 'M'         # show wind speed in m/s
         
-        self.headers = {'User-Agent':'curl'}
+        self.headers = {}
         if language:
             self.headers['Accept-Language'] = language
         

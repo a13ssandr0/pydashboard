@@ -43,7 +43,7 @@ class FeedReader(TableModule):
                 if feed.status == 200:
                     for entry in feed.entries:
                         entry['source']=feed.feed.title
-                        # news.append(entry)
+
                     self.__cache[feed_url] = feed.entries
                     news.extend(feed.entries)
                 else:
