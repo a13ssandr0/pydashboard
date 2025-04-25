@@ -39,10 +39,19 @@ class Jellyfin(BaseModule):
                         users += Fore.RED + "T " + Style.RESET_ALL
                     curTime = duration_fmt(tick_to_seconds(s['PlayState']['PositionTicks'])).removeprefix('0:').split('.')[0]
                     totTime = duration_fmt(tick_to_seconds(s['NowPlayingItem']['RunTimeTicks'])).removeprefix('0:').split('.')[0]
-                    season = s['NowPlayingItem']['ParentIndexNumber']
-                    episode = s['NowPlayingItem']['IndexNumber']
+                    users += f"{curTime}/{totTime}"
+                    
+                    season = s['NowPlayingItem'].get('ParentIndexNumber')
+                    episode = s['NowPlayingItem'].get('IndexNumber')
+                    if season is not None and episode is not None:
+                        users += f" S{season}:E{episode}"
+                    elif season is not None:
+                        users += f" S{season}"
+                    elif episode is not None:
+                        users += f" E{episode}"
+                    
                     title = s['NowPlayingItem']['Name']
-                    users += f"{curTime}/{totTime} S{season}:E{episode} - {title}\n"
+                    users += f" - {title}\n"
             return users
             
         except ConnectionError as e:
