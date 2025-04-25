@@ -48,10 +48,10 @@ class FeedReader(TableModule):
                     news.extend(feed.entries)
                 else:
                     self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
-                    news.extend(self.__cache[feed_url])
+                    news.extend(self.__cache.get(feed_url, []))
             except ConnectionError:
                 self.notify(f"Failed to get RSS feed {feed.url}. Connection error", severity="warning")
-                news.extend(self.__cache[feed_url])
+                news.extend(self.__cache.get(feed_url, []))
         
         df = DataFrame.from_dict(news).sort_values('published_parsed', ascending=False).reset_index()
         del df['index']
