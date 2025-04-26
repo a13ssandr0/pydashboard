@@ -55,22 +55,75 @@ class BaseModule(ScrollableContainer):
         
         self.styles.color = color
         
-        if border:
-            self.styles.border = tuple(border) or "none"
-            self.border_title = title if title is not None else self.__class__.__name__
-            self.styles.border_title_align = title_align
-            self.styles.border_title_background = title_background
-            self.styles.border_title_color = title_color
-            self.styles.border_title_style = title_style
-            self.border_subtitle = subtitle
-            self.styles.border_subtitle_align = subtitle_align
-            self.styles.border_subtitle_background = subtitle_background
-            self.styles.border_subtitle_color = subtitle_color
-            self.styles.border_subtitle_style = subtitle_style
+        
+        self.styles.border = tuple(border) if border else ("none", "black")
+        self.border_title = title if title is not None else self.__class__.__name__
+        self.styles.border_title_align = title_align
+        self.styles.border_title_background = title_background
+        self.styles.border_title_color = title_color
+        self.styles.border_title_style = title_style
+        self.border_subtitle = subtitle
+        self.styles.border_subtitle_align = subtitle_align
+        self.styles.border_subtitle_background = subtitle_background
+        self.styles.border_subtitle_color = subtitle_color
+        self.styles.border_subtitle_style = subtitle_style
+
+        self.__user_settings = {
+            'refreshInterval':                   refreshInterval,
+            'styles.align_horizontal':           align_horizontal,
+            'styles.align_vertical':             align_vertical,
+            'styles.color':                      color,
+            'styles.border':                     tuple(border) if border else "none",
+            'border_title':                      title if title is not None else self.__class__.__name__,
+            'styles.border_title_align':         title_align,
+            'styles.border_title_background':    title_background,
+            'styles.border_title_color':         title_color,
+            'styles.border_title_style':         title_style,
+            'border_subtitle':                   subtitle,
+            'styles.border_subtitle_align':      subtitle_align,
+            'styles.border_subtitle_background': subtitle_background,
+            'styles.border_subtitle_color':      subtitle_color,
+            'styles.border_subtitle_style':      subtitle_style,
+        }
 
         self.inner = self.inner()
         self.inner.styles.width = "auto"
         self.inner.styles.height = "auto"
+
+    def reset_settings(self, key):
+        value = self.__user_settings.get(key)
+        if value is not None:
+            match key:
+                case 'refreshInterval':
+                    self.refreshInterval = value
+                case 'styles.align_horizontal':
+                    self.styles.align_horizontal = value
+                case 'styles.align_vertical':
+                    self.styles.align_vertical = value
+                case 'styles.color':
+                    self.styles.color = value
+                case 'styles.border':
+                    self.styles.border = value
+                case 'border_title':
+                    self.border_title = value
+                case 'styles.border_title_align':
+                    self.styles.border_title_align = value
+                case 'styles.border_title_background':
+                    self.styles.border_title_background = value
+                case 'styles.border_title_color':
+                    self.styles.border_title_color = value
+                case 'styles.border_title_style':
+                    self.styles.border_title_style = value
+                case 'border_subtitle':
+                    self.border_subtitle = value
+                case 'styles.border_subtitle_align':
+                    self.styles.border_subtitle_align = value
+                case 'styles.border_subtitle_background':
+                    self.styles.border_subtitle_background = value
+                case 'styles.border_subtitle_color':
+                    self.styles.border_subtitle_color = value
+                case 'styles.border_subtitle_style':
+                    self.styles.border_subtitle_style = value
 
     def __post_init__(self):
         """Perform post initialization tasks"""
@@ -82,9 +135,7 @@ class BaseModule(ScrollableContainer):
     
     def update(self):
         result = self()
-        if result is None:
-            self.inner.update('')
-        else:
+        if result is not None:
             self.inner.update(markup(Text.from_ansi(str(result))))
 
     def _update(self):

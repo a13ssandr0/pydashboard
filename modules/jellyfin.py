@@ -52,6 +52,10 @@ class Jellyfin(BaseModule):
                     
                     title = s['NowPlayingItem']['Name']
                     users += f" - {title}\n"
+            
+            self.reset_settings('border_subtitle')
+            self.reset_settings('styles.border_subtitle_color')
+
             return users
             
         except ConnectionError as e:

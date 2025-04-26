@@ -73,6 +73,9 @@ class HomeAssistant(BaseModule):
                     for fname, states in ent_dict.items():
                         out_str += f"{fname:<{w}}{'  '.join(states)}\n"
 
+                self.reset_settings('border_subtitle')
+                self.reset_settings('styles.border_subtitle_color')
+
                 return out_str
                
             else:
