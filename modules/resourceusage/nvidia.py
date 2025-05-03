@@ -6,6 +6,8 @@ Extracted from GPUtil https://github.com/anderskm/gputil/tree/master
 
 from subprocess import PIPE, run
 
+from loguru import logger
+
 
 def safeFloatCast(strNumber):
     try:
@@ -24,6 +26,7 @@ def get_gpu_data():
         return []
     
     if 'Failed to initialize NVML' in p:
+        logger.error(p)
         return [[None, '', 'GPU: NVML Error', 'red']]
     
     bars = []

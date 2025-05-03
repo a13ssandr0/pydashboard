@@ -1,3 +1,4 @@
+from functools import wraps
 import traceback
 from re import sub
 from threading import Event
@@ -5,6 +6,7 @@ from time import sleep
 from typing import NamedTuple
 
 from durations import Duration
+from loguru import logger
 from rich.text import Text
 from textual.containers import ScrollableContainer
 from textual.css._style_properties import (BorderProperty, ColorProperty,
@@ -17,6 +19,12 @@ from helpers.strings import markup
 Coordinates = NamedTuple('Coordinates', [
     ('h', int), ('w', int), ('y', int), ('x', int),
 ])
+
+severity_map = {
+    'information': "INFO",
+    'warning': "WARNING",
+    'error': "ERROR"
+}
 
 
 class BaseModule(ScrollableContainer):
@@ -49,6 +57,7 @@ class BaseModule(ScrollableContainer):
         if isinstance(refreshInterval, str):
             refreshInterval = Duration(refreshInterval).to_seconds()
         self.refreshInterval = refreshInterval
+        logger.info('Setting {} refresh interval to {} second(s)', id, refreshInterval)
         
         self.styles.align_horizontal = align_horizontal
         self.styles.align_vertical = align_vertical
@@ -139,20 +148,27 @@ class BaseModule(ScrollableContainer):
             self.inner.update(markup(Text.from_ansi(str(result))))
 
     def _update(self):
-        try: self.update()
-        except: self.notify(traceback.format_exc(), severity='error')
-        #     self.inner.update('\n'.join(traceback.format_exc().splitlines()[-self.content_size.height:]))
+        try: 
+            self.update()
+        except Exception as e: 
+            super().notify(traceback.format_exc(), severity='error')
+            logger.exception(str(e))
     
     def on_ready(self, signal:Event):
         try:
             self.__post_init__()
-        except:
-            self.notify(traceback.format_exc(), severity='error')
+        except Exception as e: 
+            super().notify(traceback.format_exc(), severity='error')
+            logger.exception(str(e))
         while not signal.is_set():
             self._update()
             for _ in range(round(self.refreshInterval)):
                 if signal.is_set(): return
                 sleep(1)
+        
+    def notify(self, message, *, title = "", severity = "information", timeout = None):
+        logger.log(severity_map.get(severity, "INFO"), message)
+        return super().notify(message, title=title, severity=severity, timeout=timeout)
         
     def compose(self):
         yield self.inner
@@ -167,6 +183,11 @@ class ErrorModule(Static):
             color: red;
         }
     """
+    
+    @wraps(Static.__init__)
+    def __init__(self, content = "", **kwargs):
+        super().__init__(content, **kwargs)
+        logger.error(content)
     
     def compose(self):
         self.border_title = "Module error"

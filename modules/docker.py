@@ -2,6 +2,7 @@ import json
 from subprocess import run
 
 from colorama import Fore, Style
+from loguru import logger
 
 from containers import BaseModule
 
@@ -23,7 +24,6 @@ def _make_valid_json(s: str) -> str:
 class Docker(BaseModule):
 
     def __call__(self):
-        # out = '[red]Docker containers:[/red]' + '\n'
         try:
             sys_info = run(
                 ["docker", "system", "info", "--format", "json"],
@@ -87,6 +87,7 @@ class Docker(BaseModule):
                 ]
             )
         except FileNotFoundError:
+            logger.error('Cannot connect to Docker')
             return "[yellow]Docker not installed[/yellow]"
 
 

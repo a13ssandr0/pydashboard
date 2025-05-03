@@ -1,5 +1,6 @@
 from urllib.parse import quote
 
+from loguru import logger
 import requests
 from requests.exceptions import ConnectionError
 
@@ -57,7 +58,7 @@ class Weather(BaseModule):
         if speed_in_m_s:
             self.url += 'M'         # show wind speed in m/s
         
-        self.headers = {}
+        self.headers = {'User-Agent': 'curl/8.12.1'}
         if language:
             self.headers['Accept-Language'] = language
         
@@ -65,9 +66,17 @@ class Weather(BaseModule):
         
     def __call__(self):
         try:
-            self.__cache = requests.get(self.url, headers=self.headers).text
-        except ConnectionError:
-            pass
+            response = requests.get(self.url, headers=self.headers)
+            if response.status_code == 200:
+                self.__cache = response.text
+                self.reset_settings('border_subtitle')
+                self.reset_settings('styles.border_subtitle_color')
+            else:
+                self.border_subtitle = f'{response.status_code} {response.reason}'
+                self.styles.border_subtitle_color = 'red'
+                logger.error(response.text)
+        except ConnectionError as e:
+            logger.exception(str(e))
         
         return self.__cache
     

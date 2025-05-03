@@ -4,6 +4,8 @@ from select import select
 from shlex import split
 from subprocess import run
 
+from loguru import logger
+
 from containers import BaseModule
 
 
@@ -28,6 +30,7 @@ class CmdRunner(BaseModule):
         env['LINES']= str(self.content_size.height)
         
         proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe, shell=self.shell)
+        logger.debug('Running {}', ' '.join(self.args))
         
         self._screen = ''
         

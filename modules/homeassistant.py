@@ -1,6 +1,7 @@
 from json import JSONDecodeError
 from re import compile
 
+from loguru import logger
 import urllib3
 from requests import get
 from requests.exceptions import ConnectionError
@@ -48,9 +49,6 @@ class HomeAssistant(BaseModule):
                     entities = []
                     w = 0
 
-                    # fname_numbers = compile(r"(\d*)$")
-
-
                     for ent in states_dict:
                         if rexp.match(ent["entity_id"]):
                             fname = ent['attributes']['friendly_name'].strip()
@@ -81,14 +79,16 @@ class HomeAssistant(BaseModule):
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
+                logger.error('Request returned status code {} - {}', response.status_code, response.reason)
             
         except ConnectionError as e:
-            # return e.strerror
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
+            logger.exception(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
+            logger.exception(str(e))
 
 
     

@@ -35,7 +35,6 @@ class Vstack(BaseModule):
             
             try:
                 m = import_module('modules.'+mod)
-                # imported_modules.add(m)
                 widget:BaseModule = m.widget(id=full_w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")

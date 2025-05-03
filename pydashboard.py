@@ -5,6 +5,7 @@ from threading import Event, Thread
 from typing import Any, cast
 
 import yaml
+from loguru import logger
 from textual.app import App
 
 from containers import BaseModule, Coordinates, ErrorModule
@@ -49,6 +50,7 @@ class MainApp(App):
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
                 widget:BaseModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
+                logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id, widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:
@@ -79,41 +81,37 @@ class MainApp(App):
             Thread(target=hook, args=(self.signal,), name=key).start()
             
     def on_exit_app(self):
+        logger.info('Stopping module threads')
         self.signal.set()
-
-# def reload_handler(args):
-#     with open(args.config) as file:
-#         config = yaml.safe_load(file)
-
-#     invalidate_caches()
-#     for m in imported_modules: reload(m)
-
-#     try:
-#         curses.wrapper(main, config)
-#     except KeyboardInterrupt:
-#         print('Exiting')
-#         exit()
     
     
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('config', type=Path)
+    parser.add_argument('--log', type=Path, required=False)
     parser.add_argument('--debug', action=BooleanOptionalAction)
     args = parser.parse_args()
-    
-    # run_process(
-    #     args.config,
-    #     __file__,
-    #     Path(__file__).parent/'modules',
-    #     Path(__file__).parent/'basemod.py',
-    #     target=reload_handler, args=args)
 
     with open(args.config) as file:
         config = yaml.safe_load(file)
 
+    debug_logger = {'level': 'TRACE', 'backtrace': True, 'diagnose': True} if args.debug else {}
+
+    logger.remove()    
+    if args.log is not None:
+        logger.add(args.log, **debug_logger, rotation="weekly")
+    else:
+        try:
+            logger.add(args.config.parent/'log/pydashboard.log', **debug_logger, rotation="weekly")
+        except:
+            logger.add('~/.pydashboard/log/pydashboard.log', **debug_logger, rotation="weekly")
+
+    logger.info('Starting pydashboard')
+
     app = MainApp(ansi_color=config.get('ansi_color', False))
     app.config = config
     app.run()
+    logger.info('Exiting')
     if args.debug:
         #wait for user input to allow reading exceptions
         input()

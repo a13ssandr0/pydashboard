@@ -1,3 +1,4 @@
+from loguru import logger
 from pandas import DataFrame
 from requests import JSONDecodeError, Session
 
@@ -200,10 +201,12 @@ class BitTorrent(TableModule):
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
+                logger.error('Request returned status code {} - {}', response.status_code, response.reason)
 
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
+            logger.exception(str(e))
 
             
         
