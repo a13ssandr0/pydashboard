@@ -31,7 +31,10 @@ class ResourceUsage(BaseModule):
             bars.append([smem.percent, f'{b2h(smem.used)}/{b2h(smem.total)}', 'Swp', 'green'])
         
         if self.showGPU:
-            bars.extend(get_gpu_data())
+            try:
+                bars.extend(get_gpu_data())
+            except RuntimeError as e:
+                self.notify(str(e), 'Error while running nvidia-smi', 'warning')
         
         return '\n'.join([createBar(max_w=self.content_size.width, 
                                     perc=perc, text=text, 

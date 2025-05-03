@@ -23,10 +23,16 @@ def get_gpu_data():
     except:
         return []
     
+    if 'Failed to initialize NVML' in p:
+        raise RuntimeError(p)
+    
     bars = []
-    for line in p.splitlines():
+    for n, line in enumerate(p.splitlines()):
         vals = line.split(', ')
-        ID = int(vals[0])
+        try:
+            ID = int(vals[0])
+        except ValueError:
+            ID = n
         gpuUtil = safeFloatCast(vals[1])
         memTotal = safeFloatCast(vals[2])
         memUsed = safeFloatCast(vals[3])
