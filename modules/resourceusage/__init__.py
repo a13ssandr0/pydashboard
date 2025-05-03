@@ -34,7 +34,7 @@ class ResourceUsage(BaseModule):
             try:
                 bars.extend(get_gpu_data())
             except RuntimeError as e:
-                self.notify(str(e), 'Error while running nvidia-smi', 'warning')
+                self.notify(str(e), title='Error while running nvidia-smi', severity='warning')
         
         return '\n'.join([createBar(max_w=self.content_size.width, 
                                     perc=perc, text=text, 
