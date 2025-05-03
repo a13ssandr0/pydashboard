@@ -24,7 +24,7 @@ def get_gpu_data():
         return []
     
     if 'Failed to initialize NVML' in p:
-        raise RuntimeError(p)
+        return [[None, '', 'GPU: NVML Error', 'red']]
     
     bars = []
     for n, line in enumerate(p.splitlines()):

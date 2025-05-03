@@ -47,6 +47,11 @@ widget = ResourceUsage
 
 
 def createBar(max_w:int, perc:int|float, text:str='', pre_txt='', color='red'):
+    if perc is None:
+        # percentage can be None in case of errors and pre_txt will display
+        # the associated message
+        return f"[{color}]{pre_txt}[/{color}]"
+    
     max_w -= len(pre_txt)
     
     if max_w <= 0:
