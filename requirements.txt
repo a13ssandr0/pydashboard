@@ -2,6 +2,7 @@ colorama
 durations
 feedparser
 libvirt-python
+loguru
 octorest
 pandas
 psutil
