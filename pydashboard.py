@@ -95,7 +95,8 @@ if __name__ == "__main__":
     with open(args.config) as file:
         config = yaml.safe_load(file)
 
-    debug_logger = {'level': 'TRACE', 'backtrace': True, 'diagnose': True} if args.debug else {}
+    debug_logger = {'level': 'TRACE', 'backtrace': True, 'diagnose': True} if args.debug else \
+                   {'level': 'INFO'}
 
     logger.remove()    
     if args.log is not None:

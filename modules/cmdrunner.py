@@ -30,7 +30,7 @@ class CmdRunner(BaseModule):
         env['LINES']= str(self.content_size.height)
         
         proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe, shell=self.shell)
-        logger.debug('Running {}', ' '.join(self.args))
+        logger.debug('Running {}', self.args if isinstance(self.args, str) else ' '.join(self.args))
         
         self._screen = ''
         

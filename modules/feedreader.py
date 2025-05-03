@@ -1,7 +1,10 @@
+from functools import cache
 from time import strftime
 
 import feedparser
+from loguru import logger
 from pandas import DataFrame
+import requests
 from requests.exceptions import ConnectionError
 
 from containers import TableModule
@@ -35,11 +38,18 @@ class FeedReader(TableModule):
         self.feeds=feeds
         self.limit=limit
         
+    @cache
+    def cache_redirects(self, url):
+        newurl = requests.head(url, allow_redirects=True).url
+        if newurl != url:
+            logger.info('Caching redirection for {} to {}', url, newurl)
+        return newurl
+        
     def __call__(self):
         news = []
         for feed_url in self.feeds:
             try:
-                feed = feedparser.parse(feed_url)
+                feed = feedparser.parse(self.cache_redirects(feed_url))
                 if feed.status == 200:
                     for entry in feed.entries:
                         entry['source']=feed.feed.title
