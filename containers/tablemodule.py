@@ -50,10 +50,10 @@ class TableModule(BaseModule):
         self.inner.cell_padding=0
         self.inner.zebra_stripes=True
     
-    def update(self):
-        result = self()
+    def update(self, *args, **kwargs):
+        result: 'DataFrame|None' = self(*args, **kwargs)
         self.inner.clear()
-        if result is not None:
+        if result is not None and not result.empty:
             result = _mktable(df=result,
                             humanize=self.humanize,
                             justify=self.justify,

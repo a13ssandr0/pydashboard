@@ -1,5 +1,6 @@
 from functools import cache
-from time import strftime
+from threading import Timer
+from time import sleep, strftime
 
 import feedparser
 from loguru import logger
@@ -45,25 +46,56 @@ class FeedReader(TableModule):
             logger.info('Caching redirection for {} to {}', url, newurl)
         return newurl
         
-    def __call__(self):
-        news = []
-        for feed_url in self.feeds:
-            try:
-                feed = feedparser.parse(self.cache_redirects(feed_url))
-                if feed.status == 200:
-                    for entry in feed.entries:
-                        entry['source']=feed.feed.title
+    def get_feed(self, feed_url):
+        try:
+            logger.debug("Getting feed from {}", feed_url)
+            feed = feedparser.parse(self.cache_redirects(feed_url))
+            logger.debug("Feed request returned {}", feed.status)
+            if feed.status == 200:
+                for entry in feed.entries:
+                    entry['source']=feed.feed.title
 
-                    self.__cache[feed_url] = feed.entries
-                    news.extend(feed.entries)
-                else:
-                    self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
-                    news.extend(self.__cache.get(feed_url, []))
-            except ConnectionError:
-                self.notify(f"Failed to get RSS feed {feed.url}. Connection error", severity="warning")
-                news.extend(self.__cache.get(feed_url, []))
+                self.__cache[feed_url] = feed.entries
+                return feed.entries
+            elif feed.status == 429:
+                # Slow down requests if HTTP 429 Too Many Requests is being returned
+                # Next request will be sent after number of seconds specified in 
+                # header 'Retry-After' or 60 seconds if absent.
+                try:
+                    sleep_time = int(feed.headers.get('retry-after', '60'))
+                except KeyError|ValueError:
+                    sleep_time = 60
+                
+                logger.warning("{} returned status 429, waiting {} seconds before retrying", feed_url, sleep_time)
+                
+                def retry():
+                    self.get_feed(feed_url)
+                    self.update(fetch_updates=False)
+                    
+                Timer(sleep_time+1, retry).start()
+            else:
+                self.notify(f"Failed to get RSS feed {feed.url}. Status code: {feed.status}", severity="warning")
+        except ConnectionError:
+            self.notify(f"Failed to get RSS feed {feed.url}. Connection error", severity="warning")
+        return self.__cache.get(feed_url, [])
         
-        df = DataFrame.from_dict(news).sort_values('published_parsed', ascending=False).reset_index()
+    def get_fresh_news(self):
+        return [entry for feed_url in self.feeds for entry in self.get_feed(feed_url)]
+    
+    def get_news_from_cache(self):
+        return [entry for feed_url in self.feeds for entry in self.__cache.get(feed_url, [])]
+        
+    def __call__(self, fetch_updates=True):
+        if fetch_updates:
+            news = self.get_fresh_news()
+        else:
+            news = self.get_news_from_cache()
+        
+        df = DataFrame.from_dict(news)
+        if df.empty:
+            return None
+        
+        df = df.sort_values('published_parsed', ascending=False).reset_index()
         del df['index']
         df.reset_index(inplace=True)
         df['index'] += 1

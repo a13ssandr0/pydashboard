@@ -142,8 +142,8 @@ class BaseModule(ScrollableContainer):
         """Method called each time the module has to be updated"""
         pass
     
-    def update(self):
-        result = self()
+    def update(self, *args, **kwargs):
+        result = self(*args, **kwargs)
         if result is not None:
             self.inner.update(markup(Text.from_ansi(str(result))))
 
