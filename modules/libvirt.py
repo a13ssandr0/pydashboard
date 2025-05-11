@@ -113,7 +113,7 @@ class Libvirt(BaseModule):
                     cpu = 0
                 else:
                     cpu_delta = new_times[name]['cpu_time'] - self.times[name]['cpu_time']
-                    cpu = cpu_delta*100/(1e9*new_times[name]['vcpus']*self.refreshInterval)
+                    cpu = cpu_delta/(1e9*new_times[name]['vcpus']*self.refreshInterval)
                     
                 self.times = new_times
                     
