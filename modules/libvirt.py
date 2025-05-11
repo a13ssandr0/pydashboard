@@ -114,6 +114,8 @@ class Libvirt(BaseModule):
                     cpu_delta = new_times[name]['cpu_time'] - self.times[name]['cpu_time']
                     cpu = cpu_delta*100/(1e9*new_times[name]['vcpus']*self.refreshInterval)
                     
+                self.times = new_times
+                    
                 mem = memory.get(name, {'available': 1, 'unused': 1})
                 # if the domain is powered off this will be (1-1/1)*100=0
                 ram = (1-mem['unused']/mem['available'])*100
