@@ -3,6 +3,7 @@ import libvirt
 from colorama import Back, Fore, Style
 from math import ceil, floor
 from containers import BaseModule
+from helpers.units import perc_fmt
 from modules.resourceusage import createBar
 
 
@@ -127,14 +128,14 @@ class Libvirt(BaseModule):
                 
                 if self.resource_rows == 1:
                     libvirt_info += (
-                        createBar(ceil(self.content_size.width/2), cpu, f'{cpu}%', 'CPU', 'red')
+                        createBar(ceil(self.content_size.width/2), cpu, perc_fmt(cpu), 'CPU', 'red')
                         +
                         createBar(floor(self.content_size.width/2), ram, ram_txt, 'Mem', 'green')
                         + "\n"
                     )
                 else:
                     libvirt_info += (
-                        createBar(self.content_size.width, cpu, f'{cpu}%', 'CPU', 'red')
+                        createBar(self.content_size.width, cpu, perc_fmt(cpu), 'CPU', 'red')
                         + "\n" +
                         createBar(self.content_size.width, ram, ram_txt, 'Mem', 'green')
                         + "\n"
