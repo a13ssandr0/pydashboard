@@ -61,7 +61,7 @@ class Libvirt(BaseModule):
             else:
                 self.resource_rows = 1
 
-    def dom_cpu_dict(dom: 'libvirt.virDomain'):
+    def dom_cpu_dict(self, dom: 'libvirt.virDomain'):
         return {
             'cpu_time': int(dom.getCPUStats(True)[0]['cpu_time']), 
             'vcpus': dom.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_LIVE)
