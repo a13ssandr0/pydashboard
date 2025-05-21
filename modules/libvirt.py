@@ -144,14 +144,14 @@ class Libvirt(BaseModule):
         return libvirt_info
 
 
-def sizeof_fmt(num, suffix="B"):
+def sizeof_fmt(num):
     # apparently libvirt memoryStat returns the results in kilobytes (power of 10)
     # so we need to adapt the function defined in helpers.units to properly convert values
     for unit in ("K", "M", "G", "T", "P", "E", "Z"):
         if abs(num) < 1000.0:
-            return f"{num:3.1f}{unit}{suffix}"
+            return f"{num:3.1f}{unit}"
         num /= 1000.0
-    return f"{num:.1f}Y{suffix}"
+    return f"{num:.1f}Y"
 
 
 widget = Libvirt
