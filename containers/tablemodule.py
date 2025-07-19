@@ -105,6 +105,7 @@ def _mktable(df:DataFrame, humanize:dict[str,callable]=None,
     if humanize:
         for col, func in humanize.items():
             try:
+                #TODO A value is trying to be set on a copy of a slice from a DataFrame.
                 df[col] = df[col].map(func)
             except KeyError:
                 pass

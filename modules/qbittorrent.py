@@ -167,10 +167,12 @@ class BitTorrent(TableModule):
     colorize={'state': colorize}
     
     def __init__(self, *, host, username, password, port=8080, scheme='http',
-                 columns:list[str]=['state', 'progress', 'ratio', 'name'],
+                 columns=None,
                  sort:str|tuple[str,bool]|list[str|tuple[str,bool]]=('downloaded', False),
                  human_readable=True, show_header=False,
                  **kwargs):
+        if columns is None:
+            columns = ['state', 'progress', 'ratio', 'name']
         super().__init__(columns=columns, show_header=show_header, sort=sort, **kwargs)
         self.host=host
         self.username=username
@@ -183,6 +185,7 @@ class BitTorrent(TableModule):
         
     def __post_init__(self):
         self.session = Session()
+        #TODO: retry connection
         _ = self.session.post(self.url, 
                               data={"username": self.username, "password": self.password}, 
                               headers={'Referer': self.referer})

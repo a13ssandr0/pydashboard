@@ -6,6 +6,7 @@ loguru
 octorest
 pandas
 psutil
+pwntools
 pyyaml
 requests
 textual

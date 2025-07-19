@@ -2,13 +2,15 @@ from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module, invalidate_caches, reload
 from pathlib import Path
 from threading import Event, Thread
-from typing import Any, cast
+from typing import Any, Type, cast
 
 import yaml
 from loguru import logger
+from textual._path import CSSPathType
 from textual.app import App
+from textual.driver import Driver
 
-from containers import BaseModule, Coordinates, ErrorModule
+from containers import Coordinates, ErrorModule, GenericModule
 
 imported_modules = set()
 
@@ -16,9 +18,14 @@ imported_modules = set()
 
 class MainApp(App):
     CSS = r"""Screen {overflow: hidden hidden;}"""
-    
+    config:dict
     ready_hooks = {}
-    
+
+    def __init__(self, config: dict, driver_class: Type[Driver] | None = None, css_path: CSSPathType | None = None,
+                 watch_css: bool = False, ansi_color: bool = False):
+        self.config = config
+        super().__init__(driver_class, css_path, watch_css, ansi_color)
+
     def compose(self):
 
         invalidate_caches()
@@ -49,7 +56,7 @@ class MainApp(App):
             try:
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
-                widget:BaseModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
+                widget:GenericModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
                 logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id, widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
@@ -93,7 +100,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with open(args.config) as file:
-        config = yaml.safe_load(file)
+        _config = yaml.safe_load(file)
 
     debug_logger = {'level': 'TRACE', 'backtrace': True, 'diagnose': True} if args.debug else \
                    {'level': 'INFO', 'backtrace': False, 'diagnose': False}
@@ -109,8 +116,7 @@ if __name__ == "__main__":
 
     logger.info('Starting pydashboard')
 
-    app = MainApp(ansi_color=config.get('ansi_color', False))
-    app.config = config
+    app = MainApp(config=_config, ansi_color=_config.get('ansi_color', False))
     app.run()
     logger.info('Exiting')
     if args.debug:

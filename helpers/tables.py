@@ -1,14 +1,19 @@
+from typing import Callable
+
 from pandas import DataFrame
 
 from helpers.strings import ljust
 
 
-def mktable(table:DataFrame, humanize:dict[str,callable]=None, 
+def mktable(table:DataFrame, humanize:dict[str,Callable]=None,
             column_names:dict[str,str]=None,
-            justify:dict[str,callable]={}, colorize:dict[str,callable]=None,
+            justify=None, colorize:dict[str,Callable]=None,
             sortby:list[str]=None, reverse:list[bool]=None, print_header=True,
             select_columns:str|list[str]=None, sizes:list[int]=None):
     
+    if justify is None:
+        justify = {}
+
     if sortby:
         if reverse is None:
             table = table.sort_values(sortby)
