@@ -69,7 +69,7 @@ class NUT(BaseModule):
                 +
                 create_bar(floor(self.content_size.width / 2), battery_charge, f'{battery_runtime}m {battery_charge}%',
                            '', batt_color)
-                + '\nLast: ' + last_xfer_reason + '\n'
+                + '\n  Last: ' + last_xfer_reason + '\n'
         )
 
         return result
