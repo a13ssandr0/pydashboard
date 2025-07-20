@@ -28,6 +28,8 @@ class NUT(BaseModule):
             return 'Connection timed out'
         except ConnectionRefusedError:
             return 'Offline or connection refused'
+        except RuntimeError as e:
+            return str(e)
 
         if self.__model_as_title:
             self.border_title = status[self.upsname]['friendly_name']
