@@ -2,34 +2,39 @@ from datetime import datetime
 
 from containers import BaseModule
 
+
+# noinspection PyPep8Naming
 class Clock(BaseModule):
-    def __init__(self, *, font:str='bigFont', format:str=None, compact=False, showSeconds=False, **kwargs):
+    # noinspection PyShadowingBuiltins
+    def __init__(self, *, font: str = 'bigFont', format: str = None, compact=False, showSeconds=False, **kwargs):
         super().__init__(**kwargs)
         self.font = fonts.get(font, fonts['bigFont'])
-        self.format=format
-        self.compact=compact
-        self.bf1="%H:%M:%S" if showSeconds else "%H:%M"
-        self.bf2="%H %M %S" if showSeconds else "%H %M"
-        
+        self.format = format
+        self.compact = compact
+        self.bf1 = "%H:%M:%S" if showSeconds else "%H:%M"
+        self.bf2 = "%H %M %S" if showSeconds else "%H %M"
+
     def __call__(self):
         now = datetime.now()
-        time_str = join_font(self.font, now.strftime(self.bf1 if now.second%2 else self.bf2), self.compact)
+        time_str = join_font(self.font, now.strftime(self.bf1 if now.second % 2 else self.bf2), self.compact)
         if self.format:
             time_str += now.strftime(self.format)
         return time_str
-    
+
+
 widget = Clock
 
 
-def join_font(font:dict[str,list[str]], string:str, compact:bool):
+def join_font(font: dict[str, list[str]], string: str, compact: bool):
     spc = "" if compact else " "
     rows = len(font['1'])
     out = ""
     for r in range(rows):
         for c in string:
-            out += spc+font[c][r]
+            out += spc + font[c][r]
         out += '\n'
     return out
+
 
 fonts = {
     'digitalFont': {
@@ -49,7 +54,7 @@ fonts = {
         "P": ["", "", "PM"],
     },
 
-    'bigFont': {
+    'bigFont'    : {
         "1": [" ┏┓ ", "┏┛┃ ", "┗┓┃ ", " ┃┃ ", "┏┛┗┓", "┗━━┛"],
         "2": ["┏━━━┓", "┃┏━┓┃", "┗┛┏┛┃", "┏━┛┏┛", "┃ ┗━┓", "┗━━━┛"],
         "3": ["┏━━━┓", "┃┏━┓┃", "┗┛┏┛┃", "┏┓┗┓┃", "┃┗━┛┃", "┗━━━┛"],
@@ -66,7 +71,7 @@ fonts = {
         "P": ["", "", "", "", "", "PM"],
     },
 
-    'boldFont': {
+    'boldFont'   : {
         "1": ["██", "██", "██", "██", "██"],
         "2": ["██████", "    ██", "██████", "██    ", "██████"],
         "3": ["██████", "    ██", "██████", "    ██", "██████"],
@@ -83,4 +88,3 @@ fonts = {
         "P": ["", "", "", "", "PM"],
     },
 }
-

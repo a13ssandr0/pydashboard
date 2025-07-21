@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 
-def sizeof_fmt(num, suffix="B"): #psutil._common.bytes2human
+
+def sizeof_fmt(num, suffix="B", div=1024.0):  # psutil._common.bytes2human
     for unit in ("", "K", "M", "G", "T", "P", "E", "Z"):
-        if abs(num) < 1024.0:
+        if abs(num) < div:
             return f"{num:3.1f}{unit}{suffix}"
-        num /= 1024.0
+        num /= div
     return f"{num:.1f}Y{suffix}"
 
 def speedof_fmt(num, suffix="B/s"):

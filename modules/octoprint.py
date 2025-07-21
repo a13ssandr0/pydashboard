@@ -4,15 +4,18 @@ from containers import BaseModule
 
 
 class Octoprint(BaseModule):
-    def __init__(self, *, host, token, port=80, scheme='http', subtitle=None, subtitle_align=None, subtitle_background=None, subtitle_color=None, subtitle_style=None, **kwargs):
+    def __init__(self, *, host, token, port=80, scheme='http', **kwargs):
+        for k in ['subtitle','subtitle_align','subtitle_background','subtitle_color','subtitle_style']:
+            if k in kwargs:
+                del kwargs[k]
         super().__init__(**kwargs)
-        self.host=host
-        self.token=token
-        self.port=port
-        self.scheme=scheme
+        self.host = host
+        self.token = token
+        self.port = port
+        self.scheme = scheme
         self.url = f'{scheme}://{host}:{port}'
         self.styles.border_subtitle_align = 'left'
-        
+
     def __call__(self):
         try:
             out = ''
@@ -26,7 +29,7 @@ class Octoprint(BaseModule):
                 out += 'Print time: {}s'.format(job_info['progress']['printTime']) + '\n'
             if job_info['progress']['printTimeLeft'] is not None:
                 out += 'Time left: {}s'.format(job_info['progress']['printTimeLeft']) + '\n'
-                
+
             conn_info = client.connection_info()
             self.border_subtitle = conn_info['current']['state']
             self.styles.border_subtitle_color = 'green'
@@ -36,19 +39,15 @@ class Octoprint(BaseModule):
                 out += 'Temperatures:' + '\n'
                 for tool, temp in printer['temperature'].items():
                     if temp['target']:
-                        out += ' ', tool.ljust(max_len), f'{temp['actual']:.1f}°C/{temp['target']:.1f}°C' + '\n'
+                        out += ' ', tool.ljust(max_len), f"{temp['actual']:.1f}°C/{temp['target']:.1f}°C" + '\n'
                     else:
-                        out += ' ', tool.ljust(max_len), f'{temp['actual']:.1f}°C/off' + '\n'
+                        out += ' ', tool.ljust(max_len), f"{temp['actual']:.1f}°C/off" + '\n'
 
             return out
 
         except OSError:
             self.border_subtitle = 'Offline'
             self.styles.border_subtitle_color = 'red'
-    
+
+
 widget = Octoprint
-
-
-
-
-

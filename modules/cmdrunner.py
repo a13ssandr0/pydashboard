@@ -10,30 +10,31 @@ from containers import BaseModule
 
 
 class CmdRunner(BaseModule):
-    def __init__(self, *, args:str|list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, shell=False, **kwargs):
+    def __init__(self, *, args: str | list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, shell=False,
+                 **kwargs):
         super().__init__(**kwargs)
-        self.args=args if shell or isinstance(args, list) else split(args)
-        self.shell=shell
+        self.args = args if shell or isinstance(args, list) else split(args)
+        self.shell = shell
         self.master_fd, self.slave_fd = pty.openpty()
-        self.stdout_pipe=self.slave_fd if pipe_stdout else None
-        self.stderr_pipe=self.slave_fd if pipe_stderr else None
-        self.wraplines=wraplines
+        self.stdout_pipe = self.slave_fd if pipe_stdout else None
+        self.stderr_pipe = self.slave_fd if pipe_stderr else None
+        self.wraplines = wraplines
         self._screen = ''
-    
+
     def __post_init__(self):
         if self.wraplines:
             self.inner.styles.width = self.content_size.width
-    
+
     def run(self):
         env = os.environ
-        env['COLUMNS']= str(self.content_size.width)
-        env['LINES']= str(self.content_size.height)
-        
+        env['COLUMNS'] = str(self.content_size.width)
+        env['LINES'] = str(self.content_size.height)
+
         proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe, shell=self.shell)
         logger.debug('Running {}', self.args if isinstance(self.args, str) else ' '.join(self.args))
-        
+
         self._screen = ''
-        
+
         while True:
             ready, _, _ = select((self.master_fd,), (), (), .1)
 
@@ -53,5 +54,5 @@ class CmdRunner(BaseModule):
         self.run()
         return self._screen
 
-    
+
 widget = CmdRunner

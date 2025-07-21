@@ -9,17 +9,17 @@ from containers import BaseModule
 
 class Text(BaseModule):
     def __init__(
-        self,
-        *,
-        text: str = "",
-        style: Union[str, Style] = "",
-        align: Optional[Literal["default", "left", "center", "right", "full"]] = None,
-        overflow: Optional[Literal["fold", "crop", "ellipsis", "ignore"]] = None,
-        no_wrap: Optional[bool] = None,
-        end: str = "\n",
-        tab_size: Optional[int] = None,
-        spans: Optional[List[Span]] = None,
-        **kwargs
+            self,
+            *,
+            text: str = "",
+            style: Union[str, Style] = "",
+            align: Optional[Literal["default", "left", "center", "right", "full"]] = None,
+            overflow: Optional[Literal["fold", "crop", "ellipsis", "ignore"]] = None,
+            no_wrap: Optional[bool] = None,
+            end: str = "\n",
+            tab_size: Optional[int] = None,
+            spans: Optional[List[Span]] = None,
+            **kwargs
     ):
         super().__init__(**kwargs)
         self.text = text
@@ -30,8 +30,7 @@ class Text(BaseModule):
         self.end = end
         self.tab_size = tab_size
         self.spans = spans
-        self.inner.update(
-            rich.text.Text(
+        self.inner.update(rich.text.Text(
                 text,
                 style=style,
                 justify=align,
@@ -40,9 +39,8 @@ class Text(BaseModule):
                 end=end,
                 tab_size=tab_size,
                 spans=spans,
-            )
-        )
-    
+        ))
+
     def on_ready(self, _):
         pass
 

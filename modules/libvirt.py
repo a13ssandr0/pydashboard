@@ -1,31 +1,31 @@
-from typing import Literal
-import libvirt
-from colorama import Back, Fore, Style
 from math import ceil, floor
+from typing import Literal
+
+import libvirt
 from containers import BaseModule
-from helpers.units import perc_fmt
 from helpers.bars import create_bar
+from helpers.units import perc_fmt, sizeof_fmt
 
 _state_map = {
-    libvirt.VIR_DOMAIN_NOSTATE:     "nostate",
-    libvirt.VIR_DOMAIN_RUNNING:     "running",
-    libvirt.VIR_DOMAIN_BLOCKED:     "blocked",
-    libvirt.VIR_DOMAIN_PAUSED:      "paused",
-    libvirt.VIR_DOMAIN_SHUTDOWN:    "shutdown",
-    libvirt.VIR_DOMAIN_SHUTOFF:     "shutoff",
-    libvirt.VIR_DOMAIN_CRASHED:     "crashed",
+    libvirt.VIR_DOMAIN_NOSTATE    : "nostate",
+    libvirt.VIR_DOMAIN_RUNNING    : "running",
+    libvirt.VIR_DOMAIN_BLOCKED    : "blocked",
+    libvirt.VIR_DOMAIN_PAUSED     : "paused",
+    libvirt.VIR_DOMAIN_SHUTDOWN   : "shutdown",
+    libvirt.VIR_DOMAIN_SHUTOFF    : "shutoff",
+    libvirt.VIR_DOMAIN_CRASHED    : "crashed",
     libvirt.VIR_DOMAIN_PMSUSPENDED: "pmsuspended",
 }
 _color_state_map = {
-    "nostate":     f"{Fore.LIGHTWHITE_EX}nostate{Style.RESET_ALL}",
-    "running":     f"{Fore.LIGHTGREEN_EX}running{Style.RESET_ALL}",
-    "blocked":     f"{Fore.MAGENTA}blocked{Style.RESET_ALL}",
-    "paused":      f"{Fore.LIGHTYELLOW_EX}paused{Style.RESET_ALL}",
-    "shutdown":    f"{Fore.RED}shutdown{Style.RESET_ALL}",
-    "shutoff":     f"{Fore.RED}shutoff{Style.RESET_ALL}",
-    "crashed":     f"{Back.RED}crashed{Style.RESET_ALL}",
-    "pmsuspended": f"{Fore.LIGHTYELLOW_EX}pmsuspended{Style.RESET_ALL}",
-    "unknown":     f"{Fore.LIGHTYELLOW_EX}unknown{Style.RESET_ALL}",
+    "nostate"    : f"nostate",
+    "running"    : f"[green]running[/green]",
+    "blocked"    : f"[magenta]blocked[/magenta]",
+    "paused"     : f"[yellow]paused[/yellow]",
+    "shutdown"   : f"[red]shutdown[/red]",
+    "shutoff"    : f"[red]shutoff[/red]",
+    "crashed"    : f"[red]crashed[/red]",
+    "pmsuspended": f"[yellow]pmsuspended[/yellow]",
+    "unknown"    : f"[yellow]unknown[/yellow]",
 }
 
 
@@ -37,7 +37,7 @@ class Libvirt(BaseModule):
                  **kwargs):
         super().__init__(**kwargs)
         self.domain = domain
-        
+
         if resource_usage == 'none':
             self.resource_rows = 0
         elif resource_usage == 'auto':
@@ -46,7 +46,7 @@ class Libvirt(BaseModule):
             self.resource_rows = 1
         elif resource_usage == 'tworow':
             self.resource_rows = 2
-    
+
         if self.resource_rows > 0:
             with libvirt.open(self.domain) as conn:
                 self.times = {
@@ -61,10 +61,11 @@ class Libvirt(BaseModule):
             else:
                 self.resource_rows = 1
 
-    def dom_cpu_dict(self, dom: 'libvirt.virDomain'):
+    @staticmethod
+    def dom_cpu_dict(dom: 'libvirt.virDomain'):
         return {
-            'cpu_time': int(dom.getCPUStats(True)[0]['cpu_time']), 
-            'vcpus': dom.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_LIVE)
+            'cpu_time': int(dom.getCPUStats(True)[0]['cpu_time']),
+            'vcpus'   : dom.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_LIVE)
         }
 
     def __call__(self):
@@ -93,16 +94,13 @@ class Libvirt(BaseModule):
         libvirt_info = ""
         for name, state in states:
             libvirt_info += (
-                name[: self.content_size.width - max_len - 1].ljust(
-                    self.content_size.width - max_len - 1
-                )
-                + " "
-                + _color_state_map.get(state)
-                + "\n"
+                    name[: self.content_size.width - max_len - 1].ljust(self.content_size.width - max_len - 1)
+                    + " "
+                    + _color_state_map.get(state)
+                    + "\n"
             )
-            
+
             if self.resource_rows > 0:
-                cpu, ram = 0, 0
                 if new_times.get(name) is None or self.times.get(name) is None:
                     # one or both new and old times are None,
                     # domain might have been just powered on or off
@@ -112,45 +110,35 @@ class Libvirt(BaseModule):
                     cpu = 0
                 else:
                     cpu_delta = new_times[name]['cpu_time'] - self.times[name]['cpu_time']
-                    cpu = cpu_delta/(1e9*new_times[name]['vcpus']*self.refreshInterval)
-                    
+                    cpu = cpu_delta / (1e9 * new_times[name]['vcpus'] * self.refreshInterval)
+
                 self.times = new_times
-                    
+
                 mem = memory.get(name, {'available': 1, 'unused': 1})
                 # if the domain is powered off this will be (1-1/1)*100=0
-                ram = (1-mem['unused']/mem['available'])*100
-                
+                ram = (1 - mem['unused'] / mem['available']) * 100
+
                 if name in memory:
-                    ram_txt = f'{sizeof_fmt(mem['available']-mem['unused'])}/{sizeof_fmt(mem['available'])}'
+                    used = sizeof_fmt((mem['available'] - mem['unused']) * 1000.0, div=1000.0)
+                    total = sizeof_fmt(mem['available'] * 1000.0, div=1000.0)
+                    ram_txt = f"{used}/{total}"
                 else:
                     ram_txt = '0B'
-                
+
                 if self.resource_rows == 1:
                     libvirt_info += (
                             create_bar(ceil(self.content_size.width / 2), cpu * 100, perc_fmt(cpu), 'CPU', 'red')
                             +
                             create_bar(floor(self.content_size.width / 2), ram, ram_txt, 'Mem', 'green')
-                            + "\n"
                     )
                 else:
                     libvirt_info += (
                             create_bar(self.content_size.width, cpu * 100, perc_fmt(cpu), 'CPU', 'red')
                             + "\n" +
                             create_bar(self.content_size.width, ram, ram_txt, 'Mem', 'green')
-                            + "\n"
                     )
 
         return libvirt_info
-
-
-def sizeof_fmt(num):
-    # apparently libvirt memoryStat returns the results in kilobytes (power of 10)
-    # so we need to adapt the function defined in helpers.units to properly convert values
-    for unit in ("K", "M", "G", "T", "P", "E", "Z"):
-        if abs(num) < 1000.0:
-            return f"{num:3.1f}{unit}"
-        num /= 1000.0
-    return f"{num:.1f}Y"
 
 
 widget = Libvirt

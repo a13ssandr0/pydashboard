@@ -2,45 +2,45 @@
 Extracted from GPUtil https://github.com/anderskm/gputil/tree/master
 """
 
-
-
 from subprocess import PIPE, run
 
 from loguru import logger
 
 
-def safeFloatCast(strNumber):
+def safe_float_cast(str_number):
     try:
-        number = float(strNumber)
+        number = float(str_number)
     except ValueError:
         number = float('nan')
     return number
 
-def get_gpu_data():	
+
+def get_gpu_data():
     # Get ID, processing and memory utilization for all GPUs
     try:
-        p = run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.total,memory.used,temperature.gpu", "--format=csv,noheader,nounits"], stdout=PIPE).stdout.decode()
+        p = run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.total,memory.used,temperature.gpu",
+                 "--format=csv,noheader,nounits"], stdout=PIPE).stdout.decode()
     except FileNotFoundError as e:
         raise e
     except:
         return []
-    
+
     if 'Failed to initialize NVML' in p:
         logger.error(p)
         return [[None, '', 'GPU: NVML Error', 'red']]
-    
+
     bars = []
     for n, line in enumerate(p.splitlines()):
         vals = line.split(', ')
         try:
-            ID = int(vals[0])
+            gpu_id = int(vals[0])
         except ValueError:
-            ID = n
-        gpuUtil = safeFloatCast(vals[1])
-        memTotal = safeFloatCast(vals[2])
-        memUsed = safeFloatCast(vals[3])
-        memoryUtil = (memUsed/memTotal)*100
-        temp_gpu = safeFloatCast(vals[4]);
-        bars.append([gpuUtil, f'{round(gpuUtil, int(gpuUtil < 100))}% {temp_gpu}°C', f'GPU{ID}', 'red'])
-        bars.append([memoryUtil, f'{(round(memUsed/1024,1))}G/{round(memTotal/1024,1)}G', f'Mem{ID}', 'green'])
+            gpu_id = n
+        gpu_util = safe_float_cast(vals[1])
+        mem_total = safe_float_cast(vals[2])
+        mem_used = safe_float_cast(vals[3])
+        memory_util = (mem_used / mem_total) * 100
+        temp_gpu = safe_float_cast(vals[4])
+        bars.append([gpu_util, f'{round(gpu_util, int(gpu_util < 100))}% {temp_gpu}°C', f'GPU{gpu_id}', 'red'])
+        bars.append([memory_util, f'{(round(mem_used / 1024, 1))}G/{round(mem_total / 1024, 1)}G', f'Mem{gpu_id}', 'green'])
     return bars

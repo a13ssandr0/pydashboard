@@ -1,6 +1,7 @@
 import socket
 from collections import OrderedDict
 from datetime import datetime, timedelta
+
 from containers import BaseModule
 
 CMD_STATUS = b"\x00\x06status"
@@ -20,14 +21,15 @@ ALL_UNITS = (
     "Percent Load Capacity"
 )
 
+
 class APCUPSd(BaseModule):
     def __init__(self, *, title=None, host="localhost", port=3551, timeout=30, **kwargs):
         super().__init__(title=title, **kwargs)
-        self.host=host
-        self.port=port
-        self.timeout=timeout
+        self.host = host
+        self.port = port
+        self.timeout = timeout
         self.__model_as_title = title is None
-        
+
     def __call__(self):
         try:
             status = self.get()
@@ -35,27 +37,27 @@ class APCUPSd(BaseModule):
             return 'Connection timed out'
         except ConnectionRefusedError:
             return 'Offline or connection refused'
-        
+
         if self.__model_as_title:
             self.border_title = status['MODEL']
 
         # status['STATUS']   = status['STATUS']
-        status['LINEV']    = status['LINEV'].removesuffix('.0')
-        status['BCHARGE']  = status['BCHARGE'].removesuffix('.0')
-        status['LOADPCT']  = status['LOADPCT'].removesuffix('.0')
-        status['LOADPWR']  = round(float(status['LOADPCT'])*int(status['NOMPOWER'])/100)
-        status['NUMXFERS'] = f"{status.get('NUMXFERS')} transfer{'s'if status.get('NUMXFERS')!='1'else''}"
+        status['LINEV'] = status['LINEV'].removesuffix('.0')
+        status['BCHARGE'] = status['BCHARGE'].removesuffix('.0')
+        status['LOADPCT'] = status['LOADPCT'].removesuffix('.0')
+        status['LOADPWR'] = round(float(status['LOADPCT']) * int(status['NOMPOWER']) / 100)
+        status['NUMXFERS'] = f"{status.get('NUMXFERS')} transfer{'s' if status.get('NUMXFERS') != '1' else ''}"
         status['XOFFBATT'] = self.human_readable_time(status.get('XOFFBATT', 'N/A'))
-        status['XONBATT']  = self.human_readable_time(status.get('XONBATT', 'N/A'))
+        status['XONBATT'] = self.human_readable_time(status.get('XONBATT', 'N/A'))
 
         return (
-        "{STATUS:<20} {LINEV}V     {BCHARGE}%\n"
-        "LOAD: {LOADPCT:>3}% ({LOADPWR}W)  {TIMELEFT} mins left\n"
-        "LAST: {LASTXFER}\n"
-        "ONBATT:   {TONBATT}s/{CUMONBATT}s ({NUMXFERS})\n"
-        "XOFFBATT: {XOFFBATT}  XONBATT: {XONBATT}\n"
+            "{STATUS:<20} {LINEV}V     {BCHARGE}%\n"
+            "LOAD: {LOADPCT:>3}% ({LOADPWR}W)  {TIMELEFT} mins left\n"
+            "LAST: {LASTXFER}\n"
+            "ONBATT:   {TONBATT}s/{CUMONBATT}s ({NUMXFERS})\n"
+            "XOFFBATT: {XOFFBATT}  XONBATT: {XONBATT}\n"
         ).strip().format_map(status)
-    
+
     def get(self):
         """
         Connect to the APCUPSd NIS and request its status.
@@ -84,20 +86,21 @@ class APCUPSd(BaseModule):
         # create an OrderedDict out of the keys/values.
         return OrderedDict([[x.strip() for x in x.split(SEP, 1)] for x in lines])
 
-
-    def strip_units_from_lines(self, lines):
+    @staticmethod
+    def strip_units_from_lines(lines):
         """
         Removes all units from the ends of the lines.
         """
         for line in lines:
             for unit in ALL_UNITS:
                 if line.endswith(" %s" % unit):
-                    line = line[:-1-len(unit)]
+                    line = line[:-1 - len(unit)]
             yield line
 
-    def human_readable_time(self, timestr):
+    @staticmethod
+    def human_readable_time(timestr):
         try:
-            delta:timedelta = datetime.now() - datetime.strptime(timestr.split(' +')[0], "%Y-%m-%d %H:%M:%S")
+            delta: timedelta = datetime.now() - datetime.strptime(timestr.split(' +')[0], "%Y-%m-%d %H:%M:%S")
             if delta.days:
                 return f"{delta.days}d ago"
             elif delta.seconds:
@@ -111,5 +114,6 @@ class APCUPSd(BaseModule):
                     return f"{seconds}s ago"
         except:
             return timestr
-    
+
+
 widget = APCUPSd

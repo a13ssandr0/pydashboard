@@ -29,6 +29,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="utils.security.getUsers.*" />
+          <option value="libvirt.*" />
         </list>
       </option>
     </inspection_tool>

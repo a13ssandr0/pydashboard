@@ -41,6 +41,7 @@ class NUT(BaseModule):
         return result
 
     def render_ups(self, data):
+        friendly_name = data['friendly_name']
         ups_status = data['ups-status']
         input_voltage = round(float(data['input-voltage']))
         battery_charge = int(data['battery-charge'])
@@ -57,15 +58,18 @@ class NUT(BaseModule):
         last_xfer_reason = (data['input-transfer-reason'][0].upper() + data['input-transfer-reason'][1:]) \
             if 'input-transfer-reason' in data else 'None'
 
-        result = ''
-
         ups_status += f' {input_voltage}V'
-        spaces = self.content_size.width - len(data['friendly_name'] + ups_status)
+        spaces = self.content_size.width - len(friendly_name + ups_status)
+        if spaces < 2:
+            friendly_name = friendly_name[:spaces - 2]
+            spaces = 2
         name_color = 'yellow' if 'OFF' not in ups_status else 'green'
-        load_color = 'green' if ups_load<ups_load_warn else ('yellow' if ups_load<ups_load_high else 'red')
-        batt_color = 'green' if battery_charge>battery_warning else ('yellow' if battery_charge>battery_low else 'red')
-        result += (
-                f"[{name_color}]{data['friendly_name']}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
+        load_color = 'green' if ups_load < ups_load_warn else ('yellow' if ups_load < ups_load_high else 'red')
+        batt_color = 'green' if battery_charge > battery_warning else (
+            'yellow' if battery_charge > battery_low else 'red')
+
+        return (
+                f"[{name_color}]{friendly_name}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
                 +
                 create_bar(ceil(self.content_size.width / 2), ups_load, f'{load_power}W {ups_load}%', '', load_color)
                 +
@@ -73,8 +77,6 @@ class NUT(BaseModule):
                            '', batt_color)
                 + '\n  Last: ' + last_xfer_reason + '\n'
         )
-
-        return result
 
     def get(self):
         with remote(self.host, self.port, timeout=self.timeout) as sock:
@@ -107,22 +109,24 @@ class NUT(BaseModule):
             if result[:2] != "OK":
                 raise RuntimeError(result)
 
-    def get_ups_vars(self, sock, upsname):
+    @staticmethod
+    def get_ups_vars(sock, upsname):
         sock.sendline(f"LIST VAR {upsname}".encode())
         result = sock.recvline(False).decode()
         if "BEGIN LIST VAR" not in result:
             raise RuntimeError(result)
         result = sock.recvuntil(f"END LIST VAR {upsname}\n".encode()).decode()
-        return {l[0].replace('.', '-'): ' '.join(l[1:]).strip('"') for l in
-                [l.split() for l in result.replace(f'VAR {upsname} ', '').splitlines()[:-1]]}
+        return {l[0].replace('.', '-'): l[1].strip('"') for l in
+                [l.split(maxsplit=1) for l in result.replace(f'VAR {upsname} ', '').splitlines()[:-1]]}
 
-    def get_ups_names(self, sock):
+    @staticmethod
+    def get_ups_names(sock):
         sock.sendline(b"LIST UPS")
         result = sock.recvline(False).decode()
         if "BEGIN LIST UPS" not in result:
             raise RuntimeError(result)
         result = sock.recvuntil(b"END LIST UPS\n").decode().splitlines()[:-1]
-        return {l[1]: ' '.join(l[2:]).strip('"') for l in [l.split() for l in result]}
+        return {l[1]: l[2].strip('"') for l in [l.split(maxsplit=2) for l in result]}
 
 
 widget = NUT

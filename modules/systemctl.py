@@ -2,8 +2,6 @@ import re
 from os.path import splitext
 from subprocess import run
 
-from colorama import Fore, Style
-
 from containers import BaseModule
 
 # _whites = [
@@ -90,36 +88,34 @@ _reds = [
 
 def sysctl_states_map(status):
     if status in _greens:
-        return f"{Fore.LIGHTGREEN_EX}{status}{Style.RESET_ALL}"
+        return f"[green]{status}[/green]"
     elif status in _yellows:
-        return f"{Fore.LIGHTYELLOW_EX}{status}{Style.RESET_ALL}"
+        return f"[yellow]{status}[/yellow]"
     elif status in _reds:
-        return f"{Fore.RED}{status}{Style.RESET_ALL}"
+        return f"[red]{status}[/red]"
     else:
         return status
 
 
-
-
 class Systemctl(BaseModule):
 
-    def __init__(self, *, units: list[str] = [], **kwargs):
+    def __init__(self, *, units=None, **kwargs):
         super().__init__(**kwargs)
-        self.units = units
+        self.units = [] if units is None else units
 
     def __call__(self):
         my_units = run(
-            ["systemctl", "list-units", "--failed", "--quiet", "--plain"],
-            capture_output=True, text=True
+                ["systemctl", "list-units", "--failed", "--quiet", "--plain"],
+                capture_output=True, text=True
         ).stdout
         if self.units:
             my_units += run(
-                ["systemctl", "list-units", "--all", "--quiet", "--plain", *self.units],
-                capture_output=True, text=True
+                    ["systemctl", "list-units", "--all", "--quiet", "--plain", *self.units],
+                    capture_output=True, text=True
             ).stdout
 
         my_units = [
-            u.split(" ", 4) for u in re.sub("  *", " ", my_units).strip().split("\n") if u
+            u.split(" ", 4) for u in re.sub(" +", " ", my_units).strip().split("\n") if u
         ]
         my_units = [(splitext(u[0])[0], u[3]) for u in my_units]
         max_len = 0
@@ -133,10 +129,10 @@ class Systemctl(BaseModule):
         for u in my_units:
             if u[0] not in seen_units:
                 sysctl_info += (
-                    u[0][: self.content_size.width - max_len - 1].ljust(self.content_size.width - max_len - 1)
-                    + " "
-                    + sysctl_states_map(u[1])
-                    + "\n"
+                        u[0][: self.content_size.width - max_len - 1].ljust(self.content_size.width - max_len - 1)
+                        + " "
+                        + sysctl_states_map(u[1])
+                        + "\n"
                 )
                 seen_units.append(u[0])
 
