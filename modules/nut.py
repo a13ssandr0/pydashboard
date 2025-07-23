@@ -1,4 +1,4 @@
-from math import ceil, floor
+from math import ceil, floor, isnan
 from os import environ
 
 from helpers.bars import create_bar
@@ -34,31 +34,32 @@ class NUT(BaseModule):
         if self.__model_as_title:
             self.border_title = status[self.upsname]['friendly_name']
 
-        result = ''
-        for _, data in status.items():
-            result += self.render_ups(data)
-
-        return result
+        return '\n'.join(self.render_ups(data) for _, data in status.items())
 
     def render_ups(self, data):
         friendly_name = data['friendly_name']
-        ups_status = data['ups-status']
-        input_voltage = round(float(data['input-voltage']))
-        battery_charge = int(data['battery-charge'])
-        battery_low = int(data['battery-charge-low'])
-        battery_warning = int(data['battery-charge-warning']) if 'battery-charge-warning' in data else battery_low + 10
-        ups_load = int(data['ups-load'])
-        ups_load_warn = int(data['ups-load-warning']) if 'ups-load-warning' in data else 60
-        ups_load_high = int(data['ups-load-high']) if 'ups-load-high' in data else 90
+        ups_status = data.get('ups-status', 'N/A')
+        input_voltage = float(data.get('input-voltage', 'nan'))
+        battery_charge = float(data.get('battery-charge', 'nan'))
+        battery_low = int(data.get('battery-charge-low', '20'))
+        battery_warning = int(data.get('battery-charge-warning', str(battery_low + 10)))
+        ups_load = int(data.get('ups-load', -1))
+        ups_load_warn = int(data.get('ups-load-warning', '60'))
+        ups_load_high = int(data.get('ups-load-high', '90'))
         if 'ups-realpower' in data:
             load_power = int(data['ups-realpower'])
+        elif 'ups-realpower-nominal' in data:
+            load_power = round(ups_load * float(data['ups-realpower-nominal']) / 100)
         else:
-            load_power = round(float(data['ups-load']) * float(data['ups-realpower-nominal']) / 100)
-        battery_runtime = round(int(data['battery-runtime']) / 60, 1)
-        last_xfer_reason = (data['input-transfer-reason'][0].upper() + data['input-transfer-reason'][1:]) \
-            if 'input-transfer-reason' in data else 'None'
+            load_power = None
+        battery_runtime = round(float(data.get('battery-runtime', 'nan')) / 60, 1)
+        if 'input-transfer-reason' in data:
+            last_xfer_reason = data['input-transfer-reason'][0].upper() + data['input-transfer-reason'][1:]
+        else:
+            last_xfer_reason = None
 
-        ups_status += f' {input_voltage}V'
+        if not isnan(input_voltage):
+            ups_status += f' {round(input_voltage)}V'
         spaces = self.content_size.width - len(friendly_name + ups_status)
         if spaces < 2:
             friendly_name = friendly_name[:spaces - 2]
@@ -68,14 +69,29 @@ class NUT(BaseModule):
         batt_color = 'green' if battery_charge > battery_warning else (
             'yellow' if battery_charge > battery_low else 'red')
 
+        load_power = f'{load_power}W ' if load_power is not None else ''
+        if ups_load > -1:
+            load_bar = create_bar(ceil(self.content_size.width / 2), ups_load, f'{load_power}{ups_load}%', '',
+                                  load_color)
+        else:
+            load_bar = load_power
+
+        battery_runtime = f'{battery_runtime}m ' if not isnan(battery_runtime) else ''
+        if not isnan(battery_charge):
+            batt_bar = create_bar(floor(self.content_size.width / 2), battery_charge,
+                                  f'{battery_runtime}{battery_charge}%', '', batt_color)
+        else:
+            batt_bar = battery_runtime
+
+        header =  f"[{name_color}]{friendly_name}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
+        if 'RB' in ups_status:
+            #highlight in event of replace battery warning
+            header = f'[on red]{header}[/on red]'
+
         return (
-                f"[{name_color}]{friendly_name}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
-                +
-                create_bar(ceil(self.content_size.width / 2), ups_load, f'{load_power}W {ups_load}%', '', load_color)
-                +
-                create_bar(floor(self.content_size.width / 2), battery_charge, f'{battery_runtime}m {battery_charge}%',
-                           '', batt_color)
-                + '\n  Last: ' + last_xfer_reason + '\n'
+                header
+                + load_bar + batt_bar + '\n'
+                + f'  Last: {last_xfer_reason}'
         )
 
     def get(self):
