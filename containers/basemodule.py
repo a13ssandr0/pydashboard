@@ -3,7 +3,7 @@ from functools import wraps
 from re import sub
 from threading import Event
 from time import sleep
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 from durations import Duration
 from loguru import logger
@@ -35,7 +35,7 @@ class BaseModule(ScrollableContainer):
 
     def __init__(self, *,
                  id: str = None,
-                 refreshInterval: int | float | str = None,
+                 refreshInterval: Literal['never'] | int | float | str = None,
                  align_horizontal: AlignHorizontal = "left",
                  align_vertical: AlignVertical = "top",
                  color: ColorProperty = None,
@@ -62,7 +62,7 @@ class BaseModule(ScrollableContainer):
 
         super().__init__(id=id)
 
-        if isinstance(refreshInterval, str):
+        if isinstance(refreshInterval, str) and refreshInterval != 'never':
             refreshInterval = Duration(refreshInterval).to_seconds()
         self.refreshInterval = refreshInterval
         logger.info('Setting {} refresh interval to {} second(s)', id, refreshInterval)
@@ -173,6 +173,9 @@ class BaseModule(ScrollableContainer):
         except Exception as e:
             super().notify(traceback.format_exc(), severity='error')
             logger.exception(str(e))
+        if self.refreshInterval == 'never':
+            self._update()
+            return
         while not signal.is_set():
             self._update()
             for _ in range(round(self.refreshInterval)):
