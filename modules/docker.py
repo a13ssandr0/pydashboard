@@ -23,7 +23,7 @@ class Docker(BaseModule):
             sys_info = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/info').json()
             sys_df = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/system/df').json()
             vol_info = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/volumes').json()
-            ctr_info = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/containers/json').json()
+            ctr_info = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/containers/json?all=true').json()
 
             max_len = 0
             for ctr in ctr_info:
