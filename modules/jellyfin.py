@@ -5,7 +5,7 @@ from requests import get
 from requests.exceptions import ConnectionError
 
 from containers import BaseModule
-from helpers.units import duration_fmt
+from utils.units import duration_fmt
 
 
 def tick_to_seconds(ticks): return ticks / 10_000_000

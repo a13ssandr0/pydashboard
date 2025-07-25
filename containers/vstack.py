@@ -16,7 +16,7 @@ class Vstack(BaseModule):
     def __init__(self, *, mods: dict[str, dict[str, Any]],
                  defaults=None,
                  order=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(mods=mods, defaults=defaults, order=order, **kwargs)
         if defaults is None:
             defaults = {}
         self.order = [] if order is None else order
@@ -38,7 +38,7 @@ class Vstack(BaseModule):
             try:
                 m = import_module('modules.' + mod)
                 widget: BaseModule | ErrorModule = m.widget(id=full_w_id, defaults=defaults | conf.pop('defaults', {}),
-                                                            **conf)
+                                                            mod_type=mod, **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:

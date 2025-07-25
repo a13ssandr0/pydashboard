@@ -4,7 +4,7 @@ from pandas import DataFrame
 from rich.text import Text
 from textual.widgets import DataTable
 
-from helpers.lists import interleave
+from utils.lists import interleave
 from .basemodule import BaseModule
 
 
@@ -19,7 +19,7 @@ class TableModule(BaseModule):
 
     def __init__(self, *, columns: list[str], show_header=False, sizes=None,
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] | None = None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(columns=columns, show_header=show_header, sizes=sizes, sort=sort, **kwargs)
         self.columns = columns
         if sizes is None:
             sizes = [0]

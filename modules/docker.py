@@ -3,7 +3,8 @@ from requests.exceptions import ConnectionError
 from requests_unixsocket import get
 
 from containers import BaseModule
-from helpers.units import sizeof_fmt
+from utils.types import Coordinates, Size
+from utils.units import sizeof_fmt
 
 _color_state = {
     "created"   : "[green]created[/green]",
@@ -18,7 +19,7 @@ _color_state = {
 
 class Docker(BaseModule):
 
-    def __call__(self):
+    def __call__(self, size: Size):
         try:
             sys_info = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/info').json()
             sys_df = get('http+unix://%2Fvar%2Frun%2Fdocker.sock/system/df').json()
@@ -57,7 +58,7 @@ class Docker(BaseModule):
                     )
             ) + "\n".join(
                     [
-                        f"{c['Names'][:self.content_size.width - max_len - 1].ljust(self.content_size.width - max_len - 1)} {_color_state.get(c['State'], c['State'])}"
+                        f"{c['Names'][:size[1] - max_len - 1].ljust(size[1] - max_len - 1)} {_color_state.get(c['State'], c['State'])}"
                         for c in ctr_info
                     ]
             )

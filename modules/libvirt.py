@@ -3,8 +3,9 @@ from typing import Literal
 
 import libvirt
 from containers import BaseModule
-from helpers.bars import create_bar
-from helpers.units import perc_fmt, sizeof_fmt
+from utils.types import Coordinates, Size
+from utils.bars import create_bar
+from utils.units import perc_fmt, sizeof_fmt
 
 _state_map = {
     libvirt.VIR_DOMAIN_NOSTATE    : "nostate",
@@ -54,9 +55,9 @@ class Libvirt(BaseModule):
                     for dom in conn.listAllDomains(libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE)
                 }
 
-    def __post_init__(self):
+    def __post_init__(self, content_size: Size):
         if self.resource_rows < 0:
-            if self.content_size.width < 22:
+            if content_size[1] < 22:
                 self.resource_rows = 2
             else:
                 self.resource_rows = 1
@@ -68,7 +69,7 @@ class Libvirt(BaseModule):
             'vcpus'   : dom.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_LIVE)
         }
 
-    def __call__(self):
+    def __call__(self, content_size: Size):
         with libvirt.open(self.domain) as conn:
             states = [
                 (dom.name(), _state_map.get(dom.state()[0], "unknown"))
@@ -94,7 +95,7 @@ class Libvirt(BaseModule):
         libvirt_info = ""
         for name, state in states:
             libvirt_info += (
-                    name[: self.content_size.width - max_len - 1].ljust(self.content_size.width - max_len - 1)
+                    name[: content_size[1] - max_len - 1].ljust(content_size[1] - max_len - 1)
                     + " "
                     + _color_state_map.get(state)
                     + "\n"
@@ -127,15 +128,15 @@ class Libvirt(BaseModule):
 
                 if self.resource_rows == 1:
                     libvirt_info += (
-                            create_bar(ceil(self.content_size.width / 2), cpu * 100, perc_fmt(cpu), 'CPU', 'red')
+                            create_bar(ceil(content_size[1] / 2), cpu * 100, perc_fmt(cpu), 'CPU', 'red')
                             +
-                            create_bar(floor(self.content_size.width / 2), ram, ram_txt, 'Mem', 'green')
+                            create_bar(floor(content_size[1] / 2), ram, ram_txt, 'Mem', 'green')
                     )
                 else:
                     libvirt_info += (
-                            create_bar(self.content_size.width, cpu * 100, perc_fmt(cpu), 'CPU', 'red')
+                            create_bar(content_size[1], cpu * 100, perc_fmt(cpu), 'CPU', 'red')
                             + "\n" +
-                            create_bar(self.content_size.width, ram, ram_txt, 'Mem', 'green')
+                            create_bar(content_size[1], ram, ram_txt, 'Mem', 'green')
                     )
 
         return libvirt_info

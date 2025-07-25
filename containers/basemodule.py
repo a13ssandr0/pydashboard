@@ -1,25 +1,27 @@
+import inspect
 import traceback
 from functools import wraps
 from re import sub
 from threading import Event
 from time import sleep
-from typing import Literal, NamedTuple
+from typing import Literal, Optional
 
+import rpyc
 from durations import Duration
 from loguru import logger
-from plumbum import SshMachine
+from plumbum.machines.ssh_machine import SshTunnel
 from rich.text import Text
+from rpyc import Connection
 from textual.containers import ScrollableContainer
 from textual.css._style_properties import (BorderProperty, ColorProperty,
                                            StyleFlagsProperty)
 from textual.css.types import AlignHorizontal, AlignVertical
 from textual.widgets import Static
 
-from helpers.strings import markup
+from utils.ssh import SSHMachine
+from utils.types import Size
 
-Coordinates = NamedTuple('Coordinates', [
-    ('h', int), ('w', int), ('y', int), ('x', int),
-])
+
 
 severity_map = {
     'information': "INFO",
@@ -31,15 +33,18 @@ severity_map = {
 # noinspection PyPep8Naming,PyShadowingBuiltins
 class BaseModule(ScrollableContainer):
     inner = Static
-    implements_remote: bool
+    remote_machine: Optional[SSHMachine] = None
+    tunnel: Optional[SshTunnel] = None
+    remote_service: Optional[Connection] = None
 
     def __init__(self, *,
                  id: str = None,
+                 mod_type: str = None,
                  refreshInterval: Literal['never'] | int | float | str = None,
                  align_horizontal: AlignHorizontal = "left",
                  align_vertical: AlignVertical = "top",
                  color: ColorProperty = None,
-                 border: BorderProperty|tuple = ("round", "white"),
+                 border: BorderProperty | tuple = ("round", "white"),
                  title: str = None,
                  title_align: AlignHorizontal = "center",
                  title_background: ColorProperty = None,
@@ -107,10 +112,36 @@ class BaseModule(ScrollableContainer):
         self.inner.styles.height = "auto"
 
         if remote_host:
-            self.remote_machine = SshMachine(host=remote_host, port=remote_port, user=remote_username,
+            logger.info('Connecting to {}', remote_host)
+            self.remote_machine = SSHMachine(host=remote_host, port=remote_port, user=remote_username,
                                              password=remote_password, keyfile=remote_key)
+            logger.debug("Opened connection to {}", self.remote_machine)
+            self.tunnel = self.remote_machine.tunnel(0, 60001)
+            logger.debug("Opened tunnel {}", self.tunnel)
+            self.remote_service = rpyc.connect('127.0.0.1', self.tunnel.lport)
+            logger.debug("Opened connection to {}", self.remote_service)
+            self.remote_service.root.init_module(module_name=mod_type, _id=id, refreshInterval=refreshInterval,
+                                                 align_horizontal=align_horizontal, align_vertical=align_vertical,
+                                                 color=color, border=border, title=title, title_align=title_align,
+                                                 title_background=title_background, title_color=title_color,
+                                                 title_style=title_style, subtitle=subtitle,
+                                                 subtitle_align=subtitle_align, subtitle_background=subtitle_background,
+                                                 subtitle_color=subtitle_color, subtitle_style=subtitle_style,
+                                                  **kwargs)
+
+            self.call_target = self.remote_service.root.call_module
+            self.post_init_target = self.remote_service.root.post_init_module
         else:
-            self.remote_machine = None
+            self.call_target = self.__call__
+            self.post_init_target = self.__post_init__
+
+    def __del__(self):
+        if self.remote_service:
+            self.remote_service.close()
+        if self.tunnel:
+            self.tunnel.close()
+        if self.remote_machine:
+            self.remote_machine.close()
 
     def reset_settings(self, key):
         value = self.__user_settings.get(key)
@@ -147,16 +178,37 @@ class BaseModule(ScrollableContainer):
                 case 'styles.border_subtitle_style':
                     self.styles.border_subtitle_style = value
 
-    def __post_init__(self):
+    def __post_init__(self, *args, **kwargs):
         """Perform post initialization tasks"""
         pass
 
-    def __call__(self, *args, **kwargs) -> str|Text:
+    def __call__(self, *args, **kwargs) -> str | Text:
         """Method called each time the module has to be updated"""
         pass
 
+    def inject_dependencies(self, func, *args, reference_func=None, **kwargs):
+        # Inspect function signature to check if it has a Size parameter
+        signature = inspect.signature(reference_func or func)
+
+        coord_param = None
+        for param_name, param in signature.parameters.items():
+            if param.annotation is Size and coord_param is None:
+                coord_param = param_name
+
+        if coord_param:
+            kwargs[coord_param] = (
+                    self.content_size.height,
+                    self.content_size.width,
+            )
+
+        if self.remote_service:
+            return func(self.id, *args, **kwargs)
+        else:
+            return func(*args, **kwargs)
+
+
     def update(self, *args, **kwargs):
-        result = self(*args, **kwargs)
+        result = self.inject_dependencies(self.call_target, *args, reference_func=self.__call__, **kwargs)
         if result is not None:
             self.inner.update(result)
 
@@ -169,7 +221,7 @@ class BaseModule(ScrollableContainer):
 
     def on_ready(self, signal: Event):
         try:
-            self.__post_init__()
+            self.inject_dependencies(self.post_init_target, reference_func=self.__post_init__)
         except Exception as e:
             super().notify(traceback.format_exc(), severity='error')
             logger.exception(str(e))
@@ -188,10 +240,6 @@ class BaseModule(ScrollableContainer):
 
     def compose(self):
         yield self.inner
-
-    def __init_subclass__(cls, implements_remote=False, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.implements_remote = implements_remote
 
 
 class ErrorModule(Static):

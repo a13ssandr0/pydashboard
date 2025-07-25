@@ -2,7 +2,7 @@ import psutil
 from pandas import DataFrame
 
 from containers import TableModule
-from helpers.units import perc_fmt, sizeof_fmt
+from utils.units import perc_fmt, sizeof_fmt
 
 _names_map = {
     'device'    : 'Device',

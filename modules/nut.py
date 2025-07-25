@@ -1,12 +1,13 @@
 from math import ceil, floor, isnan
 from os import environ
 
-from helpers.bars import create_bar
+from utils.bars import create_bar
 
 environ['PWNLIB_NOTERM'] = 'true'
 
 from pwnlib.tubes.remote import remote
 from containers import BaseModule
+from utils.types import Coordinates, Size
 
 
 class NUT(BaseModule):
@@ -21,7 +22,7 @@ class NUT(BaseModule):
         self.timeout = timeout
         self.__model_as_title = title is None and upsname is not None
 
-    def __call__(self):
+    def __call__(self, content_size: Size):
         try:
             status = self.get()
         except TimeoutError:
@@ -34,9 +35,9 @@ class NUT(BaseModule):
         if self.__model_as_title:
             self.border_title = status[self.upsname]['friendly_name']
 
-        return '\n'.join(self.render_ups(data) for _, data in status.items())
+        return '\n'.join(self.render_ups(data, content_size[1]) for _, data in status.items())
 
-    def render_ups(self, data):
+    def render_ups(self, data, content_width):
         friendly_name = data['friendly_name']
         ups_status = data.get('ups-status', 'N/A')
         input_voltage = float(data.get('input-voltage', 'nan'))
@@ -60,7 +61,7 @@ class NUT(BaseModule):
 
         if not isnan(input_voltage):
             ups_status += f' {round(input_voltage)}V'
-        spaces = self.content_size.width - len(friendly_name + ups_status)
+        spaces = content_width - len(friendly_name + ups_status)
         if spaces < 2:
             friendly_name = friendly_name[:spaces - 2]
             spaces = 2
@@ -71,14 +72,14 @@ class NUT(BaseModule):
 
         load_power = f'{load_power}W ' if load_power is not None else ''
         if ups_load > -1:
-            load_bar = create_bar(ceil(self.content_size.width / 2), ups_load, f'{load_power}{ups_load}%', '',
+            load_bar = create_bar(ceil(content_width / 2), ups_load, f'{load_power}{ups_load}%', '',
                                   load_color)
         else:
             load_bar = load_power
 
         battery_runtime = f'{battery_runtime}m ' if not isnan(battery_runtime) else ''
         if not isnan(battery_charge):
-            batt_bar = create_bar(floor(self.content_size.width / 2), battery_charge,
+            batt_bar = create_bar(floor(content_width / 2), battery_charge,
                                   f'{battery_runtime}{battery_charge}%', '', batt_color)
         else:
             batt_bar = battery_runtime

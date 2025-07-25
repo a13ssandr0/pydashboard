@@ -7,6 +7,7 @@ from subprocess import run
 from loguru import logger
 
 from containers import BaseModule
+from utils.types import Size
 
 
 class CmdRunner(BaseModule):
@@ -22,13 +23,14 @@ class CmdRunner(BaseModule):
         self._screen = ''
 
     def __post_init__(self):
-        if self.wraplines:
+        if self.wraplines and not self.remote_machine:
             self.inner.styles.width = self.content_size.width
 
-    def run(self):
-        env = os.environ
-        env['COLUMNS'] = str(self.content_size.width)
-        env['LINES'] = str(self.content_size.height)
+    def run(self, content_size: Size):
+        env = os.environ | {
+            'LINES'  : str(content_size[0]),
+            'COLUMNS': str(content_size[1]),
+        }
 
         proc = run(args=self.args, env=env, stdout=self.stdout_pipe, stderr=self.stderr_pipe, shell=self.shell)
         logger.debug('Running {}', self.args if isinstance(self.args, str) else ' '.join(self.args))
@@ -50,8 +52,8 @@ class CmdRunner(BaseModule):
             if not ready:
                 break
 
-    def __call__(self):
-        self.run()
+    def __call__(self, content_size: Size):
+        self.run(content_size=content_size)
         return self._screen
 
 

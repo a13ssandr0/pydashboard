@@ -10,7 +10,8 @@ from textual._path import CSSPathType
 from textual.app import App
 from textual.driver import Driver
 
-from containers import Coordinates, ErrorModule, GenericModule
+from containers import ErrorModule, GenericModule
+from utils.types import Coordinates
 
 imported_modules = set()
 
@@ -56,7 +57,7 @@ class MainApp(App):
             try:
                 m = import_module('modules.'+mod)
                 imported_modules.add(m)
-                widget:GenericModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), **conf)
+                widget:GenericModule = m.widget(id=w_id, defaults=defaults|conf.pop('defaults',{}), mod_type=mod, **conf)
                 logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id, widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
