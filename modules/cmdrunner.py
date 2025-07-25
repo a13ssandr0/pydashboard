@@ -23,7 +23,7 @@ class CmdRunner(BaseModule):
         self._screen = ''
 
     def __post_init__(self):
-        if self.wraplines and not self.remote_machine:
+        if self.wraplines and not self.remote_root:
             self.inner.styles.width = self.content_size.width
 
     def run(self, content_size: Size):
