@@ -1,13 +1,15 @@
 from math import ceil, floor, isnan
 from os import environ
 
+from pwnlib.exception import PwnlibException
+
 from utils.bars import create_bar
 
 environ['PWNLIB_NOTERM'] = 'true'
 
 from pwnlib.tubes.remote import remote
 from containers import BaseModule
-from utils.types import Coordinates, Size
+from utils.types import Size
 
 
 class NUT(BaseModule):
@@ -31,14 +33,20 @@ class NUT(BaseModule):
             return 'Offline or connection refused'
         except RuntimeError as e:
             return str(e)
+        except PwnlibException as e:
+            return str(e)
 
         if self.__model_as_title:
             self.border_title = status[self.upsname]['friendly_name']
 
         return '\n'.join(self.render_ups(data, content_size[1]) for _, data in status.items())
 
-    def render_ups(self, data, content_width):
+    @staticmethod
+    def render_ups(data, content_width):
         friendly_name = data['friendly_name']
+        if 'error' in data:
+            return f"[red]{friendly_name}\n{data['error']}[/red]"
+
         ups_status = data.get('ups-status', 'N/A')
         input_voltage = float(data.get('input-voltage', 'nan'))
         battery_charge = float(data.get('battery-charge', 'nan'))
@@ -84,9 +92,9 @@ class NUT(BaseModule):
         else:
             batt_bar = battery_runtime
 
-        header =  f"[{name_color}]{friendly_name}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
+        header = f"[{name_color}]{friendly_name}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
         if 'RB' in ups_status:
-            #highlight in event of replace battery warning
+            # highlight in event of replace battery warning
             header = f'[on red]{header}[/on red]'
 
         return (
@@ -99,7 +107,14 @@ class NUT(BaseModule):
         with remote(self.host, self.port, timeout=self.timeout) as sock:
             self.login(sock)
 
-            ups_list = self.get_ups_names(sock)
+            try:
+                ups_list = self.get_ups_names(sock)
+            except RuntimeError as e:
+                if self.upsname:
+                    #cannot get friendly name, at least try to get UPS data
+                    ups_list = {self.upsname: self.upsname}
+                else:
+                    raise e
 
             if self.upsname:
                 result = {
@@ -131,7 +146,7 @@ class NUT(BaseModule):
         sock.sendline(f"LIST VAR {upsname}".encode())
         result = sock.recvline(False).decode()
         if "BEGIN LIST VAR" not in result:
-            raise RuntimeError(result)
+            return {'error': result}
         result = sock.recvuntil(f"END LIST VAR {upsname}\n".encode()).decode()
         return {l[0].replace('.', '-'): l[1].strip('"') for l in
                 [l.split(maxsplit=1) for l in result.replace(f'VAR {upsname} ', '').splitlines()[:-1]]}
