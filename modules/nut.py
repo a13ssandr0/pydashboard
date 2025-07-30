@@ -1,21 +1,22 @@
 from math import ceil, floor, isnan
 from os import environ
+from typing import Literal
 
-from pwnlib.exception import PwnlibException
-
+from containers import BaseModule
 from utils.bars import create_bar
+from utils.types import Size
 
 environ['PWNLIB_NOTERM'] = 'true'
-
+from pwnlib.exception import PwnlibException
 from pwnlib.tubes.remote import remote
-from containers import BaseModule
-from utils.types import Size
 
 
 class NUT(BaseModule):
     def __init__(self, *, title=None, host="localhost", port=3493, upsname: str = None, username: str = None,
-                 password: str = None, timeout=30, **kwargs):
-        super().__init__(title=title, **kwargs)
+                 password: str = None, timeout=30, bars: Literal['auto', 0, 1, 2] = 0,
+                 **kwargs):
+        super().__init__(title=title, host=host, port=port, upsname=upsname, username=username, password=password,
+                         timeout=timeout, bars=bars, **kwargs)
         self.username = username
         self.password = password
         self.upsname = upsname
@@ -23,6 +24,23 @@ class NUT(BaseModule):
         self.port = port
         self.timeout = timeout
         self.__model_as_title = title is None and upsname is not None
+
+        if bars == 'auto':
+            bars = 0
+        self.bars = bars
+
+    def __post_init__(self, content_size: Size):
+        if self.bars < 1:
+            if content_size[1] < 22:
+                self.bars = 2
+            else:
+                self.bars = 1
+
+        if self.bars == 1:
+            self.lbar = ceil(content_size[1] / 2)
+            self.rbar = floor(content_size[1] / 2)
+        elif self.bars == 2:
+            self.lbar = self.rbar = content_size[1]
 
     def __call__(self, content_size: Size):
         try:
@@ -41,8 +59,7 @@ class NUT(BaseModule):
 
         return '\n'.join(self.render_ups(data, content_size[1]) for _, data in status.items())
 
-    @staticmethod
-    def render_ups(data, content_width):
+    def render_ups(self, data, content_width):
         friendly_name = data['friendly_name']
         if 'error' in data:
             return f"[red]{friendly_name}\n{data['error']}[/red]"
@@ -80,14 +97,14 @@ class NUT(BaseModule):
 
         load_power = f'{load_power}W ' if load_power is not None else ''
         if ups_load > -1:
-            load_bar = create_bar(ceil(content_width / 2), ups_load, f'{load_power}{ups_load}%', '',
+            load_bar = create_bar(self.lbar, ups_load, f'{load_power}{ups_load}%', '',
                                   load_color)
         else:
             load_bar = load_power
 
         battery_runtime = f'{battery_runtime}m ' if not isnan(battery_runtime) else ''
         if not isnan(battery_charge):
-            batt_bar = create_bar(floor(content_width / 2), battery_charge,
+            batt_bar = create_bar(self.rbar, battery_charge,
                                   f'{battery_runtime}{battery_charge}%', '', batt_color)
         else:
             batt_bar = battery_runtime
@@ -99,7 +116,7 @@ class NUT(BaseModule):
 
         return (
                 header
-                + load_bar + batt_bar + '\n'
+                + load_bar + ('\n' if self.bars == 2 else '') + batt_bar + '\n'
                 + f'  Last: {last_xfer_reason}'
         )
 
@@ -111,7 +128,7 @@ class NUT(BaseModule):
                 ups_list = self.get_ups_names(sock)
             except RuntimeError as e:
                 if self.upsname:
-                    #cannot get friendly name, at least try to get UPS data
+                    # cannot get friendly name, at least try to get UPS data
                     ups_list = {self.upsname: self.upsname}
                 else:
                     raise e
