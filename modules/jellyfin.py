@@ -12,19 +12,13 @@ def tick_to_seconds(ticks): return ticks / 10_000_000
 
 
 class Jellyfin(BaseModule):
-    def __init__(self, *, host, token, port=None, scheme='https', **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *, host, token, port=443, scheme='https', **kwargs):
+        super().__init__(host=host, token=token, port=port, scheme=scheme, **kwargs)
         self.host = host
         self.token = token
         self.port = port
         self.scheme = scheme
-        self.url = f'{scheme}://{host}'
-
-        if self.port:
-            self.url += f':{port}'
-
-        self.url += '/Sessions?activeWithinSeconds=120'
-
+        self.url = f'{scheme}://{host}:{port}/Sessions?activeWithinSeconds=120'
         self.headers = {"Authorization": f"MediaBrowser Token={token}"}
 
     def __call__(self):
@@ -39,10 +33,10 @@ class Jellyfin(BaseModule):
                         users += "[red]T[/red] "
                     cur_time = \
                         duration_fmt(tick_to_seconds(s.get('PlayState', {}).get('PositionTicks', 0))).removeprefix(
-                            '0:').split('.')[0]
+                                '0:').split('.')[0]
                     tot_time = \
                         duration_fmt(tick_to_seconds(s['NowPlayingItem'].get('RunTimeTicks', 0))).removeprefix(
-                            '0:').split('.')[0]
+                                '0:').split('.')[0]
                     users += f"{cur_time}/{tot_time}"
 
                     users += " " + s['NowPlayingItem'].get('SeriesName')
@@ -66,11 +60,11 @@ class Jellyfin(BaseModule):
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
 
 
 widget = Jellyfin

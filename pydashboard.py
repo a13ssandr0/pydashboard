@@ -1,3 +1,4 @@
+import threading
 from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module, invalidate_caches, reload
 from pathlib import Path
@@ -11,6 +12,7 @@ from textual.app import App
 from textual.driver import Driver
 
 from containers import ErrorModule, GenericModule
+from utils.ssh import SessionManager
 from utils.types import Coordinates
 
 imported_modules = set()
@@ -91,6 +93,8 @@ class MainApp(App):
     def on_exit_app(self):
         logger.info('Stopping module threads')
         self.signal.set()
+        logger.info('Terminating remote connections')
+        SessionManager.close_all()
     
     
 if __name__ == "__main__":
@@ -122,4 +126,6 @@ if __name__ == "__main__":
     logger.info('Exiting')
     if args.debug:
         #wait for user input to allow reading exceptions
-        input()
+        input("Press any key to continue...")
+        for thread in threading.enumerate():
+            print(thread.name)

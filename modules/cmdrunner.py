@@ -13,7 +13,8 @@ from utils.types import Size
 class CmdRunner(BaseModule):
     def __init__(self, *, args: str | list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, shell=False,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(args=args, pipe_stdout=pipe_stdout, pipe_stderr=pipe_stderr, wraplines=wraplines, shell=shell,
+                         **kwargs)
         self.args = args if shell or isinstance(args, list) else split(args)
         self.shell = shell
         self.master_fd, self.slave_fd = pty.openpty()

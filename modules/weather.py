@@ -16,7 +16,9 @@ class Weather(BaseModule):
                  today_forecast=False, tomorrow_forecast=False,
                  quiet=True, show_city=False, no_colors=False, console_glyphs=False,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(location=location, language=language, narrow=narrow, metric=metric, speed_in_m_s=speed_in_m_s,
+                         today_forecast=today_forecast, tomorrow_forecast=tomorrow_forecast, quiet=quiet,
+                         show_city=show_city, no_colors=no_colors, console_glyphs=console_glyphs, **kwargs)
         self.location = quote(location)
         self.language = language
         self.narrow = narrow
@@ -76,7 +78,7 @@ class Weather(BaseModule):
                 self.styles.border_subtitle_color = 'red'
                 logger.error(response.text)
         except ConnectionError as e:
-            logger.exception(str(e))
+            logger.critical(str(e))
 
         return self.__cache
 

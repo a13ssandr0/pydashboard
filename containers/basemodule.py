@@ -1,6 +1,7 @@
 import inspect
 import traceback
 from functools import wraps
+from random import randint
 from re import sub
 from threading import Event
 from time import sleep
@@ -8,6 +9,7 @@ from typing import Literal
 
 from durations import Duration
 from loguru import logger
+from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin, SSHCommsChannel2Error, SSHCommsError
 from rich.text import Text
 from textual.containers import ScrollableContainer
 from textual.css._style_properties import (BorderProperty, ColorProperty,
@@ -15,7 +17,7 @@ from textual.css._style_properties import (BorderProperty, ColorProperty,
 from textual.css.types import AlignHorizontal, AlignVertical
 from textual.widgets import Static
 
-from utils.ssh import SSHManager
+from utils.ssh import SessionManager
 from utils.types import Size
 
 severity_map = {
@@ -30,6 +32,8 @@ class BaseModule(ScrollableContainer):
     inner = Static
     remote_root = None
     sess_id = None
+    conn_id = None
+    remote_settings = None
 
     def __init__(self, *,
                  id: str = None,
@@ -54,6 +58,9 @@ class BaseModule(ScrollableContainer):
                  remote_username: str = None,
                  remote_password: str = None,
                  remote_key: str = None,
+                 ssh_strict_host_key_checking: Literal[None, True, False, 'accept-new'] = None,
+                 # man ssh_config(5) - StrictHostKeyChecking
+                 ssh_ignore_known_hosts_file: bool = False,
                  **kwargs):
         """Init module and load config"""
         id = sub(r"[^\w\d\-_]", "_", id)
@@ -105,66 +112,111 @@ class BaseModule(ScrollableContainer):
         self.inner.styles.width = "auto"
         self.inner.styles.height = "auto"
 
-        if remote_host:
-            self.remote_root, self.sess_id = SSHManager.create_session(host=remote_host, port=remote_port,
-                                                                       user=remote_username,
-                                                                       password=remote_password, keyfile=remote_key)
+        self.call_target = self.__call__
+        self.post_init_target = self.__post_init__
 
-            self.remote_root.init_module(module_name=mod_type, _id=id, refreshInterval=refreshInterval,
-                                         align_horizontal=align_horizontal, align_vertical=align_vertical,
-                                         color=color, border=border, title=title, title_align=title_align,
-                                         title_background=title_background, title_color=title_color,
-                                         title_style=title_style, subtitle=subtitle,
-                                         subtitle_align=subtitle_align, subtitle_background=subtitle_background,
-                                         subtitle_color=subtitle_color, subtitle_style=subtitle_style,
-                                         **kwargs)
-
-            self.call_target = self.remote_root.call_module
-            self.post_init_target = self.remote_root.post_init_module
+        if remote_host and '@' in remote_host:
+            self.remote_host, self.remote_username = remote_host.split('@', 1)
         else:
-            self.call_target = self.__call__
-            self.post_init_target = self.__post_init__
+            self.remote_host = remote_host
+        self.remote_port = remote_port
+        self.remote_username = remote_username
+        self.remote_password = remote_password
+        self.remote_key = remote_key
+        self.mod_type = mod_type
+        self.ssh_strict_host_key_checking = ssh_strict_host_key_checking
+        self.ssh_ignore_known_hosts_file = ssh_ignore_known_hosts_file
+
+        if remote_host:
+            self.prepare_remote(remote_host, remote_port, remote_username, remote_password, remote_key, mod_type,
+                                ssh_strict_host_key_checking, ssh_ignore_known_hosts_file,
+                                id=id, refreshInterval=refreshInterval,
+                                align_horizontal=align_horizontal, align_vertical=align_vertical,
+                                color=color, border=border, title=title, title_align=title_align,
+                                title_background=title_background, title_color=title_color,
+                                title_style=title_style, subtitle=subtitle,
+                                subtitle_align=subtitle_align, subtitle_background=subtitle_background,
+                                subtitle_color=subtitle_color, subtitle_style=subtitle_style,
+                                **kwargs)
+
+    def prepare_remote(self, remote_host, remote_port, remote_username, remote_password, remote_key, mod_type,
+                       ssh_strict_host_key_checking, ssh_ignore_known_hosts_file, **kwargs):
+        self.remote_settings = {
+            'connection': {
+                'host'                        : remote_host,
+                'port'                        : remote_port,
+                'user'                        : remote_username,
+                'password'                    : remote_password,
+                'keyfile'                     : remote_key,
+                'ssh_strict_host_key_checking': ssh_strict_host_key_checking,
+                'ssh_ignore_known_hosts_file' : ssh_ignore_known_hosts_file
+            },
+            'session'   : {
+                'module_name'    : mod_type,
+                'setter_function': self.set
+            },
+            'kwargs'    : kwargs,
+        }
+
+    def init_remote(self):
+        self.conn_id = SessionManager.create_connection(**self.remote_settings['connection'])
+
+        self.remote_root, self.sess_id = SessionManager.create_session(self.conn_id, **self.remote_settings['session'])
+
+        self.remote_root.init_module(**self.remote_settings['kwargs'])
+
+        self.call_target = self.remote_root.call_module
+        self.post_init_target = self.remote_root.post_init_module
 
     def __del__(self):
         if self.remote_root:
-            SSHManager.close_session(self.sess_id)
+            SessionManager.close(sess_id=self.sess_id)
             self.remote_root = None
             self.sess_id = None
+            self.conn_id = None
+
+    def set(self, key, value):
+        match key:
+            case 'refreshInterval':
+                self.refreshInterval = value
+            case 'styles.align_horizontal':
+                self.styles.align_horizontal = value
+            case 'styles.align_vertical':
+                self.styles.align_vertical = value
+            case 'styles.color':
+                self.styles.color = value
+            case 'styles.border':
+                self.styles.border = value
+            case 'border_title':
+                self.border_title = value
+            case 'styles.border_title_align':
+                self.styles.border_title_align = value
+            case 'styles.border_title_background':
+                self.styles.border_title_background = value
+            case 'styles.border_title_color':
+                self.styles.border_title_color = value
+            case 'styles.border_title_style':
+                self.styles.border_title_style = value
+            case 'border_subtitle':
+                self.border_subtitle = value
+            case 'styles.border_subtitle_align':
+                self.styles.border_subtitle_align = value
+            case 'styles.border_subtitle_background':
+                self.styles.border_subtitle_background = value
+            case 'styles.border_subtitle_color':
+                self.styles.border_subtitle_color = value
+            case 'styles.border_subtitle_style':
+                self.styles.border_subtitle_style = value
 
     def reset_settings(self, key):
-        value = self.__user_settings.get(key)
-        if value is not None:
-            match key:
-                case 'refreshInterval':
-                    self.refreshInterval = value
-                case 'styles.align_horizontal':
-                    self.styles.align_horizontal = value
-                case 'styles.align_vertical':
-                    self.styles.align_vertical = value
-                case 'styles.color':
-                    self.styles.color = value
-                case 'styles.border':
-                    self.styles.border = value
-                case 'border_title':
-                    self.border_title = value
-                case 'styles.border_title_align':
-                    self.styles.border_title_align = value
-                case 'styles.border_title_background':
-                    self.styles.border_title_background = value
-                case 'styles.border_title_color':
-                    self.styles.border_title_color = value
-                case 'styles.border_title_style':
-                    self.styles.border_title_style = value
-                case 'border_subtitle':
-                    self.border_subtitle = value
-                case 'styles.border_subtitle_align':
-                    self.styles.border_subtitle_align = value
-                case 'styles.border_subtitle_background':
-                    self.styles.border_subtitle_background = value
-                case 'styles.border_subtitle_color':
-                    self.styles.border_subtitle_color = value
-                case 'styles.border_subtitle_style':
-                    self.styles.border_subtitle_style = value
+        try:
+            self.set(key, self.__user_settings[key])
+        except KeyError:
+            pass
+
+    def reload_styles(self):
+        for k, v in self.__user_settings.items():
+            self.set(k, v)
 
     def __post_init__(self, *args, **kwargs):
         """Perform post initialization tasks"""
@@ -189,40 +241,70 @@ class BaseModule(ScrollableContainer):
                 self.content_size.width,
             )
 
-        if self.remote_root:
-            return func(self.id, *args, **kwargs)
-        else:
-            return func(*args, **kwargs)
+        return func(*args, **kwargs)
 
     def update(self, *args, **kwargs):
         result = self.inject_dependencies(self.call_target, *args, reference_func=self.__call__, **kwargs)
         if result is not None:
             self.inner.update(result)
 
-    def _update(self):
-        try:
-            self.update()
-        except Exception as e:
-            super().notify(traceback.format_exc(), severity='error')
-            logger.exception(str(e))
-
+    @logger.catch()
     def on_ready(self, signal: Event):
-        try:
-            self.inject_dependencies(self.post_init_target, reference_func=self.__post_init__)
-        except Exception as e:
-            super().notify(traceback.format_exc(), severity='error')
-            logger.exception(str(e))
-        if self.refreshInterval == 'never':
-            self._update()
-            return
         while not signal.is_set():
-            self._update()
-            for _ in range(round(self.refreshInterval)):
-                if signal.is_set(): return
-                sleep(1)
+            try:
+                if self.remote_settings:
+                    self.init_remote()
+                self.reload_styles()
+                self.inject_dependencies(self.post_init_target, reference_func=self.__post_init__)
+
+                if self.refreshInterval == 'never':
+                    self.update()
+                    return
+
+                while not signal.is_set():
+                    self.update()
+                    self.interruptibleWait(self.refreshInterval, signal)
+
+            except SSHCommsChannel2Error as e:
+                self.handle_remote_connection_exception("SSH: stderr not available", e, signal)
+            except IncorrectLogin as e:
+                self.handle_remote_connection_exception("SSH: incorrect login", e, signal)
+            except HostPublicKeyUnknown as e:
+                self.handle_remote_connection_exception("SSH: unknown host public key", e, signal)
+
+            except SSHCommsError as e:
+                ## ssh to a nonexistent/offline host
+                self.handle_remote_connection_exception("SSH: " + e.stderr.split(':')[-1].strip(), e, signal)
+            except (
+                    ConnectionRefusedError, ConnectionResetError,  ## local port not available
+                    EOFError  ## nothing listening on the remote side of the tunnel
+            ) as e:
+                if self.conn_id:
+                    SessionManager.close(conn_id=self.conn_id)
+                self.handle_remote_connection_exception(
+                    f"{self.remote_host} not listening for connections, closing connection \"{self.conn_id}\"", e, signal)
+
+            except Exception as e:
+                super().notify(traceback.format_exc(), severity='error')
+                logger.exception(str(e))
+                self.interruptibleWait(self.refreshInterval if self.refreshInterval != 'never' else 30, signal)
+
+    def handle_remote_connection_exception(self, text, e, signal):
+        self.styles.border = ("round", "red")
+        self.styles.border_subtitle_color = "red"
+        self.border_subtitle = text
+        super().notify(f"[red]{text}[/red].\n{e}", severity='error')
+        logger.opt(depth=1).critical(f"{text} - {e}")
+        self.interruptibleWait(randint(10, 20), signal)
+
+    @staticmethod
+    def interruptibleWait(seconds, signal):
+        for _ in range(round(seconds)):
+            if signal.is_set(): return
+            sleep(1)
 
     def notify(self, message, *, title="", severity="information", timeout=None, **kwargs):
-        logger.log(severity_map.get(severity, "INFO"), message)
+        logger.opt(depth=1).log(severity_map.get(severity, "INFO"), message)
         return super().notify(message, title=title, severity=severity, timeout=timeout)
 
     def compose(self):

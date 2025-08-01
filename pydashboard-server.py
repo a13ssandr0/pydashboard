@@ -6,18 +6,23 @@ from loguru import logger
 
 
 class PyDashboardServer(rpyc.Service):
-    modules = {}
+    module = None
+    widget = None
 
-    def exposed_init_module(self, module_name, _id, **kwargs):
-        widget = import_module('modules.' + module_name).widget(id=_id, **kwargs)
-        self.modules[_id] = widget
-        return widget.id
+    def exposed_import_module(self, module_name, setter_function):
+        self.module = import_module('modules.' + module_name)
+        self.setter_function = setter_function
 
-    def exposed_post_init_module(self, _id, *args, **kwargs):
-        return self.modules[_id].__post_init__(*args, **kwargs)
+    def exposed_init_module(self, **kwargs):
+        self.widget = self.module.widget(**kwargs)
+        self.widget.set = self.setter_function
+        return self.widget.id
 
-    def exposed_call_module(self, _id, *args, **kwargs):
-        return self.modules[_id].__call__(*args, **kwargs)
+    def exposed_post_init_module(self, *args, **kwargs):
+        return self.widget.__post_init__(*args, **kwargs)
+
+    def exposed_call_module(self, *args, **kwargs):
+        return self.widget.__call__(*args, **kwargs)
 
 
 if __name__ == '__main__':

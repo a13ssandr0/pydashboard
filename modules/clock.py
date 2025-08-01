@@ -7,7 +7,7 @@ from containers import BaseModule
 class Clock(BaseModule):
     # noinspection PyShadowingBuiltins
     def __init__(self, *, font: str = 'bigFont', format: str = None, compact=False, showSeconds=False, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(font=font, format=format, compact=compact, showSeconds=showSeconds, **kwargs)
         self.font = fonts.get(font, fonts['bigFont'])
         self.format = format
         self.compact = compact

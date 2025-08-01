@@ -27,7 +27,9 @@ class TextFile(BaseModule):
             refreshInterval: Literal['never'] | int | float | str = 'never',
             **kwargs
     ):
-        super().__init__(refreshInterval=refreshInterval, **kwargs)
+        super().__init__(path=path, mode=mode, style=style, emoji=emoji, emoji_variant=emoji_variant, align=align,
+                         overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size, spans=spans,
+                         refreshInterval=refreshInterval, **kwargs)
         self.path = path
         self.mode = mode
         self.style = style

@@ -162,13 +162,12 @@ class BitTorrent(TableModule):
     colorize = {'state': colorize}
 
     def __init__(self, *, host, username, password, port=8080, scheme='http',
-                 columns=None,
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] = ('downloaded', False),
-                 human_readable=True, show_header=False,
-                 **kwargs):
+                 columns=None, human_readable=True, show_header=False, **kwargs):
         if columns is None:
             columns = ['state', 'progress', 'ratio', 'name']
-        super().__init__(columns=columns, show_header=show_header, sort=sort, **kwargs)
+        super().__init__(host=host, username=username, password=password, port=port, scheme=scheme,
+                         human_readable=human_readable, columns=columns, show_header=show_header, sort=sort, **kwargs)
         self.host = host
         self.username = username
         self.password = password
@@ -187,7 +186,7 @@ class BitTorrent(TableModule):
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
 
     def __call__(self):
         try:
@@ -210,11 +209,11 @@ class BitTorrent(TableModule):
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
 
 
 widget = BitTorrent

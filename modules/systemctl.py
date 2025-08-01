@@ -3,7 +3,7 @@ from os.path import splitext
 from subprocess import run
 
 from containers import BaseModule
-from utils.types import Coordinates, Size
+from utils.types import Size
 
 # _whites = [
 #     "alias",
@@ -101,7 +101,7 @@ def sysctl_states_map(status):
 class Systemctl(BaseModule):
 
     def __init__(self, *, units=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(units=units, **kwargs)
         self.units = [] if units is None else units
 
     def __call__(self, content_size: Size):

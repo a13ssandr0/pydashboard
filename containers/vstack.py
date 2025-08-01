@@ -13,9 +13,7 @@ class Vstack(BaseModule):
     inner: VerticalGroup = VerticalGroup
     ready_hooks = {}
 
-    def __init__(self, *, mods: dict[str, dict[str, Any]],
-                 defaults=None,
-                 order=None, **kwargs):
+    def __init__(self, *, mods: dict[str, dict[str, Any]], defaults=None, order=None, **kwargs):
         super().__init__(mods=mods, defaults=defaults, order=order, **kwargs)
         if defaults is None:
             defaults = {}
@@ -62,9 +60,6 @@ class Vstack(BaseModule):
         pass
 
     def update(self):
-        pass
-
-    def _update(self):
         pass
 
     def on_ready(self, _):

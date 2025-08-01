@@ -5,10 +5,10 @@ from containers import BaseModule
 
 class Octoprint(BaseModule):
     def __init__(self, *, host, token, port=80, scheme='http', **kwargs):
-        for k in ['subtitle','subtitle_align','subtitle_background','subtitle_color','subtitle_style']:
+        for k in ['subtitle', 'subtitle_align', 'subtitle_background', 'subtitle_color', 'subtitle_style']:
             if k in kwargs:
                 del kwargs[k]
-        super().__init__(**kwargs)
+        super().__init__(host=host, token=token, port=port, scheme=scheme, **kwargs)
         self.host = host
         self.token = token
         self.port = port

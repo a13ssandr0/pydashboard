@@ -3,8 +3,8 @@ from typing import Literal
 
 import libvirt
 from containers import BaseModule
-from utils.types import Coordinates, Size
 from utils.bars import create_bar
+from utils.types import Size
 from utils.units import perc_fmt, sizeof_fmt
 
 _state_map = {
@@ -36,7 +36,7 @@ class Libvirt(BaseModule):
     def __init__(self, *, domain: str = None,
                  resource_usage: "Literal['none', 'auto', 'onerow', 'tworow']" = 'auto',
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(domain=domain, resource_usage=resource_usage, **kwargs)
         self.domain = domain
 
         if resource_usage == 'none':

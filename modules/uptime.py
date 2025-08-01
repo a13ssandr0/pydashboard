@@ -1,14 +1,13 @@
-from sys import prefix
+from datetime import timedelta
 from typing import Literal
 
 from containers import BaseModule
-from datetime import timedelta
 
 
 class Uptime(BaseModule):
 
-    def __init__(self, *, compact:bool|Literal[0,1,2]=False, show_prefix=True, show_seconds=False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *, compact: bool | Literal[0, 1, 2] = False, show_prefix=True, show_seconds=False, **kwargs):
+        super().__init__(compact=compact, show_prefix=show_prefix, show_seconds=show_seconds, **kwargs)
         self.compact = compact
         self.show_prefix = show_prefix
         self.show_seconds = show_seconds
@@ -41,5 +40,6 @@ class Uptime(BaseModule):
             return uptime + ', '.join((d, h, m, s) if self.show_seconds else (d, h, m))
         else:
             return uptime + f'{days}d {hours:02}:{minutes:02}' + (f':{seconds:02}' if self.show_seconds else '')
+
 
 widget = Uptime

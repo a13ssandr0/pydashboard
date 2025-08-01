@@ -35,7 +35,8 @@ class FeedReader(TableModule):
             columns.append('published_parsed')
         columns.append('title')
 
-        super().__init__(columns=columns, show_header=False, **kwargs)
+        super().__init__(columns=columns, show_header=False, feeds=feeds, showSource=showSource,
+                         showPublishDate=showPublishDate, showIndex=showIndex, limit=limit, **kwargs)
 
         self.feeds = feeds
         self.limit = limit

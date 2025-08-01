@@ -14,18 +14,18 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def color_state(state):
     match state.lower():
         case "on":
-            return "[green]ON [/green]"  # "\033[0;32mON \033[0m"
+            return "[green]ON [/green]"
         case "off":
-            return "[blue]OFF[/blue]"  # "\033[0;34mOFF\033[0m"
+            return "[blue]OFF[/blue]"
         case "unavailable":
-            return "[red]N/A[/red]"  # "\033[0;31mN/A\033[0m"
+            return "[red]N/A[/red]"
         case _:
             return state
 
 
 class HomeAssistant(BaseModule):
     def __init__(self, *, host, token, filters: list[str], port=8123, scheme='https', **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(host=host, token=token, filters=filters, port=port, scheme=scheme, **kwargs)
         self.host = host
         self.token = token
         self.filters = filters
@@ -85,11 +85,11 @@ class HomeAssistant(BaseModule):
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            logger.exception(str(e))
+            logger.critical(str(e))
 
 
 widget = HomeAssistant

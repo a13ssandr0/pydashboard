@@ -25,7 +25,8 @@ class Text(BaseModule):
             spans: Optional[List[Span]] = None,
             **kwargs
     ):
-        super().__init__(**kwargs)
+        super().__init__(text=text, mode=mode, style=style, emoji=emoji, emoji_variant=emoji_variant, align=align,
+                         overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size, spans=spans, **kwargs)
 
         if mode == "rich":
             text = rich.text.Text.from_markup(
