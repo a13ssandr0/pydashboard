@@ -16,7 +16,7 @@ class SessionManager:
     lock = Lock()
 
     @classmethod
-    def create_connection(cls, host, user=None, port=None, keyfile=None, password=None, setter_function=None,
+    def create_connection(cls, host, user=None, port=None, keyfile=None, password=None,
                           ssh_strict_host_key_checking=None, ssh_ignore_known_hosts_file=None):
         with cls.lock:
             logger.info('Connecting to {}', host)
@@ -53,7 +53,8 @@ class SessionManager:
 
         cls.active_sessions_count[conn_id] += 1
 
-        logger.success('Opened connection to {}:{} via SSH tunnel', cls.active_ssh[conn_id].host, cls.active_tunnels[conn_id].lport)
+        logger.success('Opened connection to {}:{} via SSH tunnel', cls.active_ssh[conn_id].host,
+                       cls.active_tunnels[conn_id].lport)
         return cls.active_sessions[sess_id].root, sess_id
 
     @classmethod
@@ -99,8 +100,6 @@ class SessionManager:
         ssh = cls.active_ssh.pop(conn_id)
         logger.debug("Closing SSH connection", ssh)
         ssh.close()
-
-
 
     @classmethod
     def close_all(cls):

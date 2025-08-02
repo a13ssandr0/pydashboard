@@ -1,6 +1,5 @@
 from json import JSONDecodeError
 
-from loguru import logger
 from requests import get
 from requests.exceptions import ConnectionError
 
@@ -60,11 +59,11 @@ class Jellyfin(BaseModule):
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
 
 
 widget = Jellyfin

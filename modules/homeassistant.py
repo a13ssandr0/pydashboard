@@ -2,7 +2,6 @@ from json import JSONDecodeError
 from re import compile
 
 import urllib3
-from loguru import logger
 from requests import get
 from requests.exceptions import ConnectionError
 
@@ -80,16 +79,16 @@ class HomeAssistant(BaseModule):
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
-                logger.error('Request returned status code {} - {}', response.status_code, response.reason)
+                self.logger.error('Request returned status code {} - {}', response.status_code, response.reason)
 
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
 
 
 widget = HomeAssistant

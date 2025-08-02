@@ -4,7 +4,6 @@ from time import strftime
 
 import feedparser
 import requests
-from loguru import logger
 from pandas import DataFrame
 from requests.exceptions import ConnectionError
 
@@ -45,14 +44,14 @@ class FeedReader(TableModule):
     def cache_redirects(self, url):
         newurl = requests.head(url, allow_redirects=True).url
         if newurl != url:
-            logger.info('Caching redirection for {} to {}', url, newurl)
+            self.logger.info('Caching redirection for {} to {}', url, newurl)
         return newurl
 
     def get_feed(self, feed_url):
         try:
-            logger.debug("Getting feed from {}", feed_url)
+            self.logger.debug("Getting feed from {}", feed_url)
             feed = feedparser.parse(self.cache_redirects(feed_url))
-            logger.debug("Feed request returned {}", feed.status)
+            self.logger.debug("Feed request returned {}", feed.status)
             if feed.status == 200:
                 for entry in feed.entries:
                     entry['source'] = feed.feed.title
@@ -68,7 +67,7 @@ class FeedReader(TableModule):
                 except KeyError | ValueError:
                     sleep_time = 60
 
-                logger.warning("{} returned status 429, waiting {} seconds before retrying", feed_url, sleep_time)
+                self.logger.warning("{} returned status 429, waiting {} seconds before retrying", feed_url, sleep_time)
 
                 def retry():
                     self.get_feed(feed_url)

@@ -12,8 +12,7 @@ from loguru import logger
 from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin, SSHCommsChannel2Error, SSHCommsError
 from rich.text import Text
 from textual.containers import ScrollableContainer
-from textual.css._style_properties import (BorderProperty, ColorProperty,
-                                           StyleFlagsProperty)
+from textual.css._style_properties import BorderProperty, ColorProperty, StyleFlagsProperty
 from textual.css.types import AlignHorizontal, AlignVertical
 from textual.widgets import Static
 
@@ -68,10 +67,14 @@ class BaseModule(ScrollableContainer):
 
         super().__init__(id=id)
 
+        self.logger = logger.bind(module=f"{self.__class__.__name__}(id={id})")
+        # noinspection PyTypeChecker
+        self.on_ready = self.logger.catch()(self.on_ready)
+
         if isinstance(refreshInterval, str) and refreshInterval != 'never':
             refreshInterval = Duration(refreshInterval).to_seconds()
         self.refreshInterval = refreshInterval
-        logger.info('Setting {} refresh interval to {} second(s)', id, refreshInterval)
+        self.logger.info('Setting {} refresh interval to {} second(s)', id, refreshInterval)
 
         self.styles.align_horizontal = align_horizontal
         self.styles.align_vertical = align_vertical
@@ -248,7 +251,6 @@ class BaseModule(ScrollableContainer):
         if result is not None:
             self.inner.update(result)
 
-    @logger.catch()
     def on_ready(self, signal: Event):
         while not signal.is_set():
             try:
@@ -282,11 +284,12 @@ class BaseModule(ScrollableContainer):
                 if self.conn_id:
                     SessionManager.close(conn_id=self.conn_id)
                 self.handle_remote_connection_exception(
-                    f"{self.remote_host} not listening for connections, closing connection \"{self.conn_id}\"", e, signal)
+                        f"{self.remote_host} not listening for connections, closing connection \"{self.conn_id}\"", e,
+                        signal)
 
             except Exception as e:
                 super().notify(traceback.format_exc(), severity='error')
-                logger.exception(str(e))
+                self.logger.exception(str(e))
                 self.interruptibleWait(self.refreshInterval if self.refreshInterval != 'never' else 30, signal)
 
     def handle_remote_connection_exception(self, text, e, signal):
@@ -294,7 +297,7 @@ class BaseModule(ScrollableContainer):
         self.styles.border_subtitle_color = "red"
         self.border_subtitle = text
         super().notify(f"[red]{text}[/red].\n{e}", severity='error')
-        logger.opt(depth=1).critical(f"{text} - {e}")
+        self.logger.opt(depth=1).critical(f"{text} - {e}")
         self.interruptibleWait(randint(10, 20), signal)
 
     @staticmethod
@@ -304,7 +307,7 @@ class BaseModule(ScrollableContainer):
             sleep(1)
 
     def notify(self, message, *, title="", severity="information", timeout=None, **kwargs):
-        logger.opt(depth=1).log(severity_map.get(severity, "INFO"), message)
+        self.logger.opt(depth=1).log(severity_map.get(severity, "INFO"), message)
         return super().notify(message, title=title, severity=severity, timeout=timeout)
 
     def compose(self):

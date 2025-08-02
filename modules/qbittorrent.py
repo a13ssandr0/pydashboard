@@ -1,4 +1,3 @@
-from loguru import logger
 from pandas import DataFrame
 from requests import JSONDecodeError, Session
 from requests.exceptions import ConnectionError
@@ -186,7 +185,7 @@ class BitTorrent(TableModule):
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
 
     def __call__(self):
         try:
@@ -204,16 +203,16 @@ class BitTorrent(TableModule):
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
-                logger.error('Request returned status code {} - {}', response.status_code, response.reason)
+                self.logger.error('Request returned status code {} - {}', response.status_code, response.reason)
 
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
         except JSONDecodeError as e:
             self.border_subtitle = f'JSONDecodeError'
             self.styles.border_subtitle_color = 'red'
-            logger.critical(str(e))
+            self.logger.critical(str(e))
 
 
 widget = BitTorrent

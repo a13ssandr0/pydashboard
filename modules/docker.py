@@ -1,4 +1,3 @@
-from loguru import logger
 from requests.exceptions import ConnectionError
 from requests_unixsocket import get
 
@@ -63,10 +62,10 @@ class Docker(BaseModule):
                     ]
             )
         except FileNotFoundError:
-            logger.error('Cannot connect to Docker')
+            self.logger.error('Cannot connect to Docker')
             return "[yellow]Docker not installed[/yellow]"
         except ConnectionError as e:
-            logger.error('Docker connection error: {}', e)
+            self.logger.error('Docker connection error: {}', e)
             return f"[red]{e}[/red]"
 
 

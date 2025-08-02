@@ -1,7 +1,6 @@
 from urllib.parse import quote
 
 import requests
-from loguru import logger
 from requests.exceptions import ConnectionError
 from rich.text import Text
 
@@ -76,9 +75,9 @@ class Weather(BaseModule):
             else:
                 self.border_subtitle = f'{response.status_code} {response.reason}'
                 self.styles.border_subtitle_color = 'red'
-                logger.error(response.text)
+                self.logger.error(response.text)
         except ConnectionError as e:
-            logger.critical(str(e))
+            self.logger.critical(str(e))
 
         return self.__cache
 
