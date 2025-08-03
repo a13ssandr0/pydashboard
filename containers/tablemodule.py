@@ -112,7 +112,9 @@ def _mktable(df: DataFrame, humanize: dict[str, Callable] = None,
     if humanize:
         for col, func in humanize.items():
             try:
-                df.loc[:, col] = df[col].map(func)
+                # explicitly casting to str to avoid errors in future versions of pandas
+                ### FutureWarning: Setting an item of incompatible dtype is deprecated and will raise in a future error of pandas.
+                df.loc[:, col] = df[col].map(func).astype(str)
             except KeyError:
                 pass
 

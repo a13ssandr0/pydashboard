@@ -14,12 +14,13 @@ class SessionManager:
     active_sessions: dict[str, Connection] = {}
     active_sessions_count: dict[str, int] = defaultdict(lambda: 0)
     lock = Lock()
+    logger = logger.bind(module="SSHSessionManager")
 
     @classmethod
     def create_connection(cls, host, user=None, port=None, keyfile=None, password=None,
                           ssh_strict_host_key_checking=None, ssh_ignore_known_hosts_file=None):
         with cls.lock:
-            logger.info('Connecting to {}', host)
+            cls.logger.info('Connecting to {}', host)
             conn_id = f'{user}@{host}:{port}'
             if conn_id not in cls.active_ssh:
                 ssh_opts = []
@@ -36,10 +37,10 @@ class SessionManager:
 
                 cls.active_ssh[conn_id] = SshMachine(host=host, user=user, port=port, keyfile=keyfile,
                                                      password=password, ssh_opts=ssh_opts)
-                logger.debug("Opened connection to {}", cls.active_ssh[conn_id])
+                cls.logger.debug("Opened connection to {}", cls.active_ssh[conn_id])
             if conn_id not in cls.active_tunnels:
                 cls.active_tunnels[conn_id] = cls.active_ssh[conn_id].tunnel(0, 60001)
-                logger.debug("Opened tunnel {}", cls.active_tunnels[conn_id])
+                cls.logger.debug("Opened tunnel {}", cls.active_tunnels[conn_id])
 
         return conn_id
 
@@ -48,12 +49,12 @@ class SessionManager:
         sess_id = f'{conn_id};{module_name}'
         if sess_id not in cls.active_sessions:
             cls.active_sessions[sess_id] = rpyc.connect('127.0.0.1', cls.active_tunnels[conn_id].lport)
-            logger.debug("Opened connection to {}", cls.active_sessions[sess_id])
+            cls.logger.debug("Opened connection to {}", cls.active_sessions[sess_id])
             cls.active_sessions[sess_id].root.import_module(module_name, setter_function)
 
         cls.active_sessions_count[conn_id] += 1
 
-        logger.success('Opened connection to {}:{} via SSH tunnel', cls.active_ssh[conn_id].host,
+        cls.logger.success('Opened connection to {}:{} via SSH tunnel', cls.active_ssh[conn_id].host,
                        cls.active_tunnels[conn_id].lport)
         return cls.active_sessions[sess_id].root, sess_id
 
@@ -86,19 +87,19 @@ class SessionManager:
     @classmethod
     def __close_session(cls, sess_id):
         session = cls.active_sessions.pop(sess_id)
-        logger.debug("Closing session {}", session)
+        cls.logger.debug("Closing session {}", session)
         session.close()
 
     @classmethod
     def __close_tunnel(cls, conn_id):
         tunnel = cls.active_tunnels.pop(conn_id)
-        logger.debug("Closing tunnel {}", tunnel)
+        cls.logger.debug("Closing tunnel {}", tunnel)
         tunnel.close()
 
     @classmethod
     def __close_ssh(cls, conn_id):
         ssh = cls.active_ssh.pop(conn_id)
-        logger.debug("Closing SSH connection", ssh)
+        cls.logger.debug("Closing SSH connection", ssh)
         ssh.close()
 
     @classmethod

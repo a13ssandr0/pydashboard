@@ -1,4 +1,5 @@
-import threading
+import os
+import sys
 from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module
 from pathlib import Path
@@ -9,17 +10,21 @@ import yaml
 from loguru import logger
 from textual._path import CSSPathType
 from textual.app import App
+from textual.binding import Binding
 from textual.driver import Driver
+from watchfiles import watch
 
-from containers import ErrorModule, GenericModule
+from containers import ErrorModule, GenericModule as Module
 from utils.ssh import SessionManager
 from utils.types import Coordinates
 
 
 class MainApp(App):
     CSS = r"""Screen {overflow: hidden hidden;}"""
+    BINDINGS = [Binding("ctrl+c", "quit", "Quit", show=False, priority=True)]
     config: dict
     ready_hooks = {}
+    modules_threads = []
 
     def __init__(self, config: dict, driver_class: Type[Driver] | None = None, css_path: CSSPathType | None = None,
                  watch_css: bool = False, ansi_color: bool = False):
@@ -54,8 +59,7 @@ class MainApp(App):
 
             try:
                 m = import_module('modules.' + mod)
-                widget: GenericModule = m.widget(id=w_id, defaults=defaults | conf.pop('defaults', {}), mod_type=mod,
-                                                 **conf)
+                widget: Module = m.widget(id=w_id, defaults=defaults | conf.pop('defaults', {}), mod_type=mod, **conf)
                 logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id,
                                widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
@@ -82,11 +86,16 @@ class MainApp(App):
     def on_ready(self):
         self.signal = Event()
         for key, hook in self.ready_hooks.items():
-            Thread(target=hook, args=(self.signal,), name=key).start()
+            t = Thread(target=hook, args=(self.signal,), name=key)
+            self.modules_threads.append(t)
+            t.start()
+        self.ready_hooks.clear()
 
     def on_exit_app(self):
         logger.info('Stopping module threads')
         self.signal.set()
+        while self.modules_threads:
+            self.modules_threads.pop().join()
         logger.info('Terminating remote connections')
         SessionManager.close_all()
 
@@ -122,11 +131,27 @@ if __name__ == "__main__":
 
     logger.info('Starting pydashboard')
 
-    app = MainApp(config=_config, ansi_color=_config.get('ansi_color', False))
-    app.run()
+    main_app = MainApp(config=_config, ansi_color=_config.get('ansi_color', False))
+
+
+    def reloader(cfg_file, app: MainApp):
+        try:
+            for changes in watch(cfg_file, stop_event=app.signal):
+                # it's actually possible to use app.signal as a stop event because it would be fired only in two cases:
+                # - normal shutdown: in such case we only need to stop the watcher
+                # - configuration reload: in such case the event is fired from the app.exit() method below and
+                #                         it will eventually become useless since the whole terminal is being replaced
+                logger.success("{} changed on disk, reloading", cfg_file)
+                logger.debug(changes)
+                app.exit()
+
+                os.execv(sys.executable, ['python'] + sys.argv)
+        finally:
+            app.exit()
+
+
+    app_thread = Thread(target=reloader, args=(args.config, main_app), name='AppReloader')
+    app_thread.start()
+
+    main_app.run()
     logger.info('Exiting')
-    if args.debug:
-        # wait for user input to allow reading exceptions
-        input("Press any key to continue...")
-        for thread in threading.enumerate():
-            print(thread.name)

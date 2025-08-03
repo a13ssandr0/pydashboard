@@ -4,13 +4,14 @@ libvirt-python
 loguru
 octorest
 pandas
+plumbum
 psutil
 pwntools
 pyyaml
 requests
 requests-unixsocket
-textual
-rpyc
-plumbum
 rich
+rpyc
+textual
 urllib3
+watchfiles
