@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Literal
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 
 class Uptime(BaseModule):

@@ -5,7 +5,7 @@ from rich.emoji import EmojiVariant
 from rich.style import Style
 from rich.text import Span
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 
 # noinspection PyPep8Naming
@@ -13,6 +13,7 @@ class TextFile(BaseModule):
     def __init__(
             self,
             *,
+            title: str = None,
             path: str = "",
             mode: Literal["plain", "rich", "ansi"] = "plain",
             style: Union[str, Style] = "",
@@ -27,8 +28,11 @@ class TextFile(BaseModule):
             refreshInterval: Literal['never'] | int | float | str = 'never',
             **kwargs
     ):
-        super().__init__(path=path, mode=mode, style=style, emoji=emoji, emoji_variant=emoji_variant, align=align,
-                         overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size, spans=spans,
+        if title is None:
+            title = path
+
+        super().__init__(title=title, path=path, mode=mode, style=style, emoji=emoji, emoji_variant=emoji_variant,
+                         align=align, overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size, spans=spans,
                          refreshInterval=refreshInterval, **kwargs)
         self.path = path
         self.mode = mode

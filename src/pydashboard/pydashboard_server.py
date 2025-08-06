@@ -1,8 +1,17 @@
 from importlib import import_module
 
 import rpyc
-from rpyc import ThreadedServer
 from loguru import logger
+from rpyc import ThreadedServer
+
+# noinspection PyUnboundLocalVariable
+if not __package__:
+    # Make CLI runnable from source tree with python src/package
+    import os, sys
+
+    __package__ = os.path.basename(os.path.dirname(__file__))
+    package_source_path = os.path.dirname(os.path.dirname(__file__))
+    sys.path.insert(0, package_source_path)
 
 
 class PyDashboardServer(rpyc.Service):
@@ -25,7 +34,11 @@ class PyDashboardServer(rpyc.Service):
         return self.widget.__call__(*args, **kwargs)
 
 
-if __name__ == '__main__':
+def main():
     server = ThreadedServer(PyDashboardServer, port=60001)
     logger.info('Starting PyDashboardServer on port 60001')
     server.start()
+
+
+if __name__ == '__main__':
+    main()

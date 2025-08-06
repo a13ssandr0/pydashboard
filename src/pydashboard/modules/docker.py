@@ -1,9 +1,9 @@
 from requests.exceptions import ConnectionError
 from requests_unixsocket import get
 
-from containers import BaseModule
-from utils.types import Size
-from utils.units import sizeof_fmt
+from pydashboard.containers import BaseModule
+from pydashboard.utils.types import Size
+from pydashboard.utils.units import sizeof_fmt
 
 _color_state = {
     "created"   : "[green]created[/green]",

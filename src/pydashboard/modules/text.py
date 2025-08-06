@@ -5,7 +5,7 @@ from rich.emoji import EmojiVariant
 from rich.style import Style
 from rich.text import Span
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 
 class Text(BaseModule):

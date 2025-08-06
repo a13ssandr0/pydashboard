@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 
 # noinspection PyPep8Naming

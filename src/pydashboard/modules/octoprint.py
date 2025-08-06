@@ -1,6 +1,6 @@
 from octorest import OctoRest
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 
 class Octoprint(BaseModule):

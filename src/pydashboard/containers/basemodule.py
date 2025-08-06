@@ -16,8 +16,8 @@ from textual.css._style_properties import BorderProperty, ColorProperty, StyleFl
 from textual.css.types import AlignHorizontal, AlignVertical
 from textual.widgets import Static
 
-from utils.ssh import SessionManager
-from utils.types import Size
+from pydashboard.utils.ssh import SessionManager
+from pydashboard.utils.types import Size
 
 severity_map = {
     'information': "INFO",
@@ -325,8 +325,8 @@ class ErrorModule(Static):
     """
 
     @wraps(Static.__init__)
-    def __init__(self, content="", **kwargs):
-        super().__init__(content, **kwargs)
+    def __init__(self, content="", markup=False,  **kwargs):
+        super().__init__(content, markup=markup, **kwargs)
         logger.error(content)
 
     def compose(self):

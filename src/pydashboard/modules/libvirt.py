@@ -1,21 +1,28 @@
 from math import ceil, floor
 from typing import Literal
 
-import libvirt
-from containers import BaseModule
-from utils.bars import create_bar
-from utils.types import Size
-from utils.units import perc_fmt, sizeof_fmt
+try:
+    # noinspection PyUnresolvedReferences
+    from libvirt import VIR_CONNECT_LIST_DOMAINS_ACTIVE, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_CRASHED, \
+        VIR_DOMAIN_NOSTATE, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED, VIR_DOMAIN_RUNNING, VIR_DOMAIN_SHUTDOWN, \
+        VIR_DOMAIN_SHUTOFF, open as virconnect_open, virDomain
+except ImportError:
+    raise ImportError("libvirt module is not available: you need to install 'pydashboard[libvirt]' to use this module.")
+
+from pydashboard.containers import BaseModule
+from pydashboard.utils.bars import create_bar
+from pydashboard.utils.types import Size
+from pydashboard.utils.units import perc_fmt, sizeof_fmt
 
 _state_map = {
-    libvirt.VIR_DOMAIN_NOSTATE    : "nostate",
-    libvirt.VIR_DOMAIN_RUNNING    : "running",
-    libvirt.VIR_DOMAIN_BLOCKED    : "blocked",
-    libvirt.VIR_DOMAIN_PAUSED     : "paused",
-    libvirt.VIR_DOMAIN_SHUTDOWN   : "shutdown",
-    libvirt.VIR_DOMAIN_SHUTOFF    : "shutoff",
-    libvirt.VIR_DOMAIN_CRASHED    : "crashed",
-    libvirt.VIR_DOMAIN_PMSUSPENDED: "pmsuspended",
+    VIR_DOMAIN_NOSTATE    : "nostate",
+    VIR_DOMAIN_RUNNING    : "running",
+    VIR_DOMAIN_BLOCKED    : "blocked",
+    VIR_DOMAIN_PAUSED     : "paused",
+    VIR_DOMAIN_SHUTDOWN   : "shutdown",
+    VIR_DOMAIN_SHUTOFF    : "shutoff",
+    VIR_DOMAIN_CRASHED    : "crashed",
+    VIR_DOMAIN_PMSUSPENDED: "pmsuspended",
 }
 _color_state_map = {
     "nostate"    : f"nostate",
@@ -34,7 +41,7 @@ class Libvirt(BaseModule):
     times = {}
 
     def __init__(self, *, domain: str = None,
-                 resource_usage: "Literal['none', 'auto', 'onerow', 'tworow']" = 'auto',
+                 resource_usage: Literal['none', 'auto', 'onerow', 'tworow'] = 'auto',
                  **kwargs):
         super().__init__(domain=domain, resource_usage=resource_usage, **kwargs)
         self.domain = domain
@@ -49,10 +56,10 @@ class Libvirt(BaseModule):
             self.resource_rows = 2
 
         if self.resource_rows > 0:
-            with libvirt.open(self.domain) as conn:
+            with virconnect_open(self.domain) as conn:
                 self.times = {
                     dom.name(): self.dom_cpu_dict(dom)
-                    for dom in conn.listAllDomains(libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE)
+                    for dom in conn.listAllDomains(VIR_CONNECT_LIST_DOMAINS_ACTIVE)
                 }
 
     def __post_init__(self, content_size: Size):
@@ -63,14 +70,14 @@ class Libvirt(BaseModule):
                 self.resource_rows = 1
 
     @staticmethod
-    def dom_cpu_dict(dom: 'libvirt.virDomain'):
+    def dom_cpu_dict(dom: virDomain):
         return {
             'cpu_time': int(dom.getCPUStats(True)[0]['cpu_time']),
-            'vcpus'   : dom.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_LIVE)
+            'vcpus'   : dom.vcpusFlags(VIR_DOMAIN_AFFECT_LIVE)
         }
 
     def __call__(self, content_size: Size):
-        with libvirt.open(self.domain) as conn:
+        with virconnect_open(self.domain) as conn:
             states = [
                 (dom.name(), _state_map.get(dom.state()[0], "unknown"))
                 for dom in conn.listAllDomains()
@@ -78,11 +85,11 @@ class Libvirt(BaseModule):
             if self.resource_rows > 0:
                 new_times = {
                     dom.name(): self.dom_cpu_dict(dom)
-                    for dom in conn.listAllDomains(libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE)
+                    for dom in conn.listAllDomains(VIR_CONNECT_LIST_DOMAINS_ACTIVE)
                 }
                 memory = {
                     dom.name(): dom.memoryStats()
-                    for dom in conn.listAllDomains(libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE)
+                    for dom in conn.listAllDomains(VIR_CONNECT_LIST_DOMAINS_ACTIVE)
                 }
 
         states.sort(key=lambda x: x[0])

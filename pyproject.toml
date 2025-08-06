@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project.urls]
+github = "https://github.com/a13ssandro/pydashboard"
+
+[project]
+name = "pydashboard"
+version = "1.0.0"
+authors = [{ name="Alessandro Campolo", email="campoloalex@gmail.com" }]
+description = "Modular dashboard for terminal"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Monitoring",
+]
+license = "GPL-3.0-only"
+license-files = ["LICENSE.txt"]
+dependencies = [
+    "durations~=0.3.3",
+    "feedparser~=6.0.11",
+    "loguru~=0.7.3",
+    "octorest~=0.4",
+    "pandas~=2.3.1",
+    "plumbum~=1.9.0",
+    "psutil~=7.0.0",
+    "pwntools~=4.14.1",
+    "pyyaml~=6.0.2",
+    "requests~=2.32.4",
+    "requests-unixsocket~=0.4.1",
+    "rich~=14.1.0",
+    "rpyc~=6.0.2",
+    "textual~=5.2.0",
+    "urllib3~=2.5.0",
+    "watchfiles~=1.1.0",
+]
+
+[project.optional-dependencies]
+libvirt = ["libvirt-python~=11.6.0"]
+
+[project.scripts]
+pydashboard = "pydashboard.pydashboard_main:main"
+pydashboard-server = "pydashboard.pydashboard_server:main"

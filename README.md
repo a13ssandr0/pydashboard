@@ -11,5 +11,5 @@ pip install -r requirements.txt
 #Run
 ```bash
 source .venv/bin/activate
-python pydashboard.py path/to/config.yml
+python pydashboard_main.py path/to/config.yml
 ```

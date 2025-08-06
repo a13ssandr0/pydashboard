@@ -3,10 +3,10 @@ from subprocess import PIPE, run
 import psutil as ps
 from psutil._common import bytes2human as b2h, shwtemp
 
-from containers import BaseModule
-from utils.bars import create_bar
-from utils.numbers import safe_float_cast
-from utils.types import Size
+from pydashboard.containers import BaseModule
+from pydashboard.utils.bars import create_bar
+from pydashboard.utils.numbers import safe_float_cast
+from pydashboard.utils.types import Size
 
 
 # noinspection PyPep8Naming

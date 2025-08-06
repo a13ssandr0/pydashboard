@@ -4,7 +4,7 @@ import requests
 from requests.exceptions import ConnectionError
 from rich.text import Text
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 
 class Weather(BaseModule):

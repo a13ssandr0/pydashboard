@@ -1,8 +1,8 @@
 from rich.text import Text
 
-from containers import BaseModule
-from utils.bars import create_bar
-from utils.types import Size
+from pydashboard.containers import BaseModule
+from pydashboard.utils.bars import create_bar
+from pydashboard.utils.types import Size
 
 
 class Demo(BaseModule):

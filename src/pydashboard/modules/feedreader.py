@@ -7,7 +7,7 @@ import requests
 from pandas import DataFrame
 from requests.exceptions import ConnectionError
 
-from containers import TableModule
+from pydashboard.containers import TableModule
 
 
 # noinspection PyPep8Naming

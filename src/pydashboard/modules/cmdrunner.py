@@ -4,8 +4,8 @@ from select import select
 from shlex import split
 from subprocess import run
 
-from containers import BaseModule
-from utils.types import Size
+from pydashboard.containers import BaseModule
+from pydashboard.utils.types import Size
 
 
 class CmdRunner(BaseModule):

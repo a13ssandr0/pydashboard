@@ -4,7 +4,7 @@ from pandas import DataFrame
 from rich.text import Text
 from textual.widgets import DataTable
 
-from utils.lists import interleave
+from pydashboard.utils.lists import interleave
 from .basemodule import BaseModule
 
 

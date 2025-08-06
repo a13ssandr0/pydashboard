@@ -2,8 +2,8 @@ import re
 from os.path import splitext
 from subprocess import run
 
-from containers import BaseModule
-from utils.types import Size
+from pydashboard.containers import BaseModule
+from pydashboard.utils.types import Size
 
 # _whites = [
 #     "alias",

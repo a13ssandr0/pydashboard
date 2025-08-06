@@ -1,8 +1,8 @@
 import psutil
 from pandas import DataFrame
 
-from containers import TableModule
-from utils.units import perc_fmt, sizeof_fmt
+from pydashboard.containers import TableModule
+from pydashboard.utils.units import perc_fmt, sizeof_fmt
 
 _names_map = {
     'device'    : 'Device',

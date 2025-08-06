@@ -14,14 +14,24 @@ from textual.binding import Binding
 from textual.driver import Driver
 from watchfiles import watch
 
-from containers import ErrorModule, GenericModule as Module
-from utils.ssh import SessionManager
-from utils.types import Coordinates
+# noinspection PyUnboundLocalVariable
+if not __package__:
+    # Make CLI runnable from source tree with python src/package
+    __package__ = os.path.basename(os.path.dirname(__file__))
+    package_source_path = os.path.dirname(os.path.dirname(__file__))
+    sys.path.insert(0, package_source_path)
+
+from .containers import ErrorModule, GenericModule as Module
+from .utils.ssh import SessionManager
+from .utils.types import Coordinates
+
+
 
 
 class MainApp(App):
     CSS = r"""Screen {overflow: hidden hidden;}"""
     BINDINGS = [Binding("ctrl+c", "quit", "Quit", show=False, priority=True)]
+    signal = Event()
     config: dict
     ready_hooks = {}
     modules_threads = []
@@ -58,12 +68,14 @@ class MainApp(App):
                                  conf['window'].get('x', 0))
 
             try:
-                m = import_module('modules.' + mod)
+                m = import_module('pydashboard.modules.' + mod)
                 widget: Module = m.widget(id=w_id, defaults=defaults | conf.pop('defaults', {}), mod_type=mod, **conf)
                 logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id,
                                widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
+            except ImportError as e:
+                widget = ErrorModule(str(e))
             except AttributeError as e:
                 widget = ErrorModule(f"Attribute '{e.name}' not found in module {mod}")
 
@@ -84,7 +96,7 @@ class MainApp(App):
                 self.ready_hooks.update(widget.ready_hooks)
 
     def on_ready(self):
-        self.signal = Event()
+        self.signal.clear()
         for key, hook in self.ready_hooks.items():
             t = Thread(target=hook, args=(self.signal,), name=key)
             self.modules_threads.append(t)
@@ -100,7 +112,9 @@ class MainApp(App):
         SessionManager.close_all()
 
 
-if __name__ == "__main__":
+def main():
+    from loguru import logger
+
     parser = ArgumentParser()
     parser.add_argument('config', type=Path)
     parser.add_argument('--log', type=Path, required=False)
@@ -127,12 +141,12 @@ if __name__ == "__main__":
         except:
             logger.add('~/.pydashboard/log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
 
+    # noinspection PyShadowingNames
     logger = logger.bind(module="MainApp")
 
     logger.info('Starting pydashboard')
 
     main_app = MainApp(config=_config, ansi_color=_config.get('ansi_color', False))
-
 
     def reloader(cfg_file, app: MainApp):
         try:
@@ -149,9 +163,12 @@ if __name__ == "__main__":
         finally:
             app.exit()
 
-
     app_thread = Thread(target=reloader, args=(args.config, main_app), name='AppReloader')
     app_thread.start()
 
     main_app.run()
     logger.info('Exiting')
+
+
+if __name__ == "__main__":
+    main()

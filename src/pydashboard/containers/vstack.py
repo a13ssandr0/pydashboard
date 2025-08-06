@@ -4,7 +4,7 @@ from typing import Any
 
 from textual.containers import VerticalGroup
 
-from containers.basemodule import BaseModule, ErrorModule
+from pydashboard.containers.basemodule import BaseModule, ErrorModule
 
 
 class Vstack(BaseModule):
@@ -34,11 +34,13 @@ class Vstack(BaseModule):
             full_w_id = self.id + '-' + w_id
 
             try:
-                m = import_module('modules.' + mod)
+                m = import_module('pydashboard.modules.' + mod)
                 widget: BaseModule | ErrorModule = m.widget(id=full_w_id, defaults=defaults | conf.pop('defaults', {}),
                                                             mod_type=mod, **conf)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
+            except ImportError as e:
+                widget = ErrorModule(str(e))
             except AttributeError as e:
                 widget = ErrorModule(f"Attribute '{e.name}' not found in module {mod}")
 

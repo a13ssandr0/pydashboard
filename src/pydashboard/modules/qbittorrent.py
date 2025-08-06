@@ -2,9 +2,9 @@ from pandas import DataFrame
 from requests import JSONDecodeError, Session
 from requests.exceptions import ConnectionError
 
-from containers import TableModule
-from utils import noneg
-from utils.units import duration_fmt, perc_fmt, sizeof_fmt, speedof_fmt, time_fmt
+from pydashboard.containers import TableModule
+from pydashboard.utils import noneg
+from pydashboard.utils.units import duration_fmt, perc_fmt, sizeof_fmt, speedof_fmt, time_fmt
 
 states_map = {
     'allocating'        : 'A',

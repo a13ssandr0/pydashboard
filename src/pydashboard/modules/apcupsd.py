@@ -2,7 +2,7 @@ import socket
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
-from containers import BaseModule
+from pydashboard.containers import BaseModule
 
 CMD_STATUS = b"\x00\x06status"
 EOF = b"  \n\x00\x00"
