@@ -10,7 +10,6 @@ from requests.exceptions import ConnectionError
 from pydashboard.containers import TableModule
 
 
-# noinspection PyPep8Naming
 class FeedReader(TableModule):
     justify = {'index': 'right'}
     humanize = {
@@ -24,18 +23,28 @@ class FeedReader(TableModule):
 
     __cache = {}
 
-    def __init__(self, *, feeds: list[str], showSource=True, showPublishDate=True, showIndex=False, limit=20, **kwargs):
+    def __init__(self, *, feeds: list[str], show_source=True, show_publish_date=True, show_index=False, limit=20, **kwargs):
+        """
+
+        Args:
+            feeds:
+            show_source:
+            show_publish_date:
+            show_index:
+            limit:
+            **kwargs: See [TableModule](../containers/tablemodule.md)
+        """
         columns = []
-        if showIndex:
+        if show_index:
             columns.append('index')
-        if showSource:
+        if show_source:
             columns.append('source')
-        if showPublishDate:
+        if show_publish_date:
             columns.append('published_parsed')
         columns.append('title')
 
-        super().__init__(columns=columns, show_header=False, feeds=feeds, showSource=showSource,
-                         showPublishDate=showPublishDate, showIndex=showIndex, limit=limit, **kwargs)
+        super().__init__(columns=columns, show_header=False, feeds=feeds, show_source=show_source,
+                         show_publish_date=show_publish_date, show_index=show_index, limit=limit, **kwargs)
 
         self.feeds = feeds
         self.limit = limit

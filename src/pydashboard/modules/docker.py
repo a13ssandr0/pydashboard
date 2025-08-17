@@ -17,6 +17,10 @@ _color_state = {
 
 
 class Docker(BaseModule):
+    """
+    Args:
+        **kwargs: See [BaseModule](../containers/basemodule.md)
+    """
 
     def __call__(self, size: Size):
         try:

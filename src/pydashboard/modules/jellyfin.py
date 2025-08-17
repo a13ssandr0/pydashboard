@@ -12,6 +12,15 @@ def tick_to_seconds(ticks): return ticks / 10_000_000
 
 class Jellyfin(BaseModule):
     def __init__(self, *, host, token, port=443, scheme='https', **kwargs):
+        """
+
+        Args:
+            host:
+            token:
+            port:
+            scheme:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(host=host, token=token, port=port, scheme=scheme, **kwargs)
         self.host = host
         self.token = token

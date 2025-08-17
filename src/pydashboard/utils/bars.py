@@ -1,3 +1,25 @@
+from math import ceil, floor
+from typing import Literal
+
+
+def calc_bars_sizes(content_width: int, bars: Literal['auto', 0, 1, 2]):
+    if bars == 'auto' or bars < 1:
+        if content_width < 22:
+            bars = 2
+        else:
+            bars = 1
+    elif bars > 2:
+        bars = 2
+
+    if bars == 1:
+        lbar = ceil(content_width / 2)
+        rbar = floor(content_width / 2)
+    else:
+        lbar = rbar = content_width
+
+    return bars, lbar, rbar
+
+
 def create_bar(max_w: int, perc: int | float, text: str = '', pre_txt='', color='red'):
     if perc is None:
         # percentage can be None in case of errors and pre_txt will display

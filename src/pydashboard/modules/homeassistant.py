@@ -24,6 +24,16 @@ def color_state(state):
 
 class HomeAssistant(BaseModule):
     def __init__(self, *, host, token, filters: list[str], port=8123, scheme='https', **kwargs):
+        """
+
+        Args:
+            host:
+            token:
+            filters:
+            port:
+            scheme:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(host=host, token=token, filters=filters, port=port, scheme=scheme, **kwargs)
         self.host = host
         self.token = token

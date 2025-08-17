@@ -15,6 +15,22 @@ class Weather(BaseModule):
                  today_forecast=False, tomorrow_forecast=False,
                  quiet=True, show_city=False, no_colors=False, console_glyphs=False,
                  **kwargs):
+        """
+
+        Args:
+            location:
+            language:
+            narrow:
+            metric:
+            speed_in_m_s:
+            today_forecast:
+            tomorrow_forecast:
+            quiet:
+            show_city:
+            no_colors:
+            console_glyphs:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(location=location, language=language, narrow=narrow, metric=metric, speed_in_m_s=speed_in_m_s,
                          today_forecast=today_forecast, tomorrow_forecast=tomorrow_forecast, quiet=quiet,
                          show_city=show_city, no_colors=no_colors, console_glyphs=console_glyphs, **kwargs)

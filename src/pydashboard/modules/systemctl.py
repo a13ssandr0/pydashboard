@@ -101,6 +101,12 @@ def sysctl_states_map(status):
 class Systemctl(BaseModule):
 
     def __init__(self, *, units=None, **kwargs):
+        """
+
+        Args:
+            units:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(units=units, **kwargs)
         self.units = [] if units is None else units
 

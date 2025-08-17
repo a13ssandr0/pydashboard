@@ -1,18 +1,28 @@
 from datetime import datetime
+from typing import Literal
 
 from pydashboard.containers import BaseModule
 
 
-# noinspection PyPep8Naming
 class Clock(BaseModule):
+
     # noinspection PyShadowingBuiltins
-    def __init__(self, *, font: str = 'bigFont', format: str = None, compact=False, showSeconds=False, **kwargs):
-        super().__init__(font=font, format=format, compact=compact, showSeconds=showSeconds, **kwargs)
+    def __init__(self, *, font: Literal['digitalFont', 'bigFont', 'boldFont'] = 'bigFont', format: str = None,
+                 compact: bool = False, show_seconds: bool = False, **kwargs):
+        """
+        Args:
+            font:
+            format: Format the clock string displayed under the main clock
+            compact: Remove spaces from between numbers
+            show_seconds: Show seconds in main clock
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
+        super().__init__(font=font, format=format, compact=compact, show_seconds=show_seconds, **kwargs)
         self.font = fonts.get(font, fonts['bigFont'])
         self.format = format
         self.compact = compact
-        self.bf1 = "%H:%M:%S" if showSeconds else "%H:%M"
-        self.bf2 = "%H %M %S" if showSeconds else "%H %M"
+        self.bf1 = "%H:%M:%S" if show_seconds else "%H:%M"
+        self.bf2 = "%H %M %S" if show_seconds else "%H %M"
 
     def __call__(self):
         now = datetime.now()

@@ -2,11 +2,15 @@ durations~=0.3.3
 feedparser~=6.0.11
 libvirt-python~=11.6.0
 loguru~=0.7.3
+mkdocs-autoapi
+mkdocs-material
+mkdocstrings[python]
 octorest~=0.4
 pandas~=2.3.1
 plumbum~=1.9.0
 psutil~=7.0.0
 pwntools~=4.14.1
+python-benedict[yaml]~=0.34.1
 pyyaml~=6.0.2
 requests~=2.32.4
 requests-unixsocket~=0.4.1

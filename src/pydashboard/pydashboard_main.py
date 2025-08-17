@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module
@@ -6,7 +7,9 @@ from pathlib import Path
 from threading import Event, Thread
 from typing import Any, Type, cast
 
-import yaml
+from benedict import benedict
+from benedict.core import rename
+from benedict.utils import type_util
 from loguru import logger
 from textual._path import CSSPathType
 from textual.app import App
@@ -24,8 +27,6 @@ if not __package__:
 from .containers import ErrorModule, GenericModule as Module
 from .utils.ssh import SessionManager
 from .utils.types import Coordinates
-
-
 
 
 class MainApp(App):
@@ -116,13 +117,20 @@ def main():
     from loguru import logger
 
     parser = ArgumentParser()
-    parser.add_argument('config', type=Path)
+    parser.add_argument('config', type=Path, default=Path.home()/'.config/pydashboard/config.yml')
     parser.add_argument('--log', type=Path, required=False)
     parser.add_argument('--debug', action=BooleanOptionalAction)
     args = parser.parse_args()
 
-    with open(args.config) as file:
-        _config = yaml.safe_load(file)
+    pattern = re.compile(r"((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))")
+    def _standardize_item(d, key, value):
+        if type_util.is_string(key):
+            # https://stackoverflow.com/a/12867228/2096218
+            norm_key = pattern.sub(r"_\1", key).lower()
+            rename(d, key, norm_key)
+
+    _config = benedict(args.config, format='yaml', keypath_separator=None)
+    _config.traverse(_standardize_item)
 
     debug_logger = {'level': 'TRACE', 'backtrace': True, 'diagnose': True} if args.debug else \
         {'level': 'INFO', 'backtrace': False, 'diagnose': False}
@@ -134,12 +142,14 @@ def main():
                   "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
 
     if args.log is not None:
+        if args.log.is_dir():
+            args.log /= 'pydashboard.log'
         logger.add(args.log, **debug_logger, format=log_format, rotation="weekly")
     else:
         try:
-            logger.add(args.config.parent / 'log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
+            logger.add(Path.home()/'/.pydashboard/log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
         except:
-            logger.add('~/.pydashboard/log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
+            logger.add(args.config.parent / 'log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
 
     # noinspection PyShadowingNames
     logger = logger.bind(module="MainApp")

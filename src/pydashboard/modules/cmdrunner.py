@@ -9,8 +9,19 @@ from pydashboard.utils.types import Size
 
 
 class CmdRunner(BaseModule):
-    def __init__(self, *, args: str | list[str], pipe_stdout=True, pipe_stderr=True, wraplines=False, shell=False,
-                 **kwargs):
+    def __init__(self, *, args: str | list[str], pipe_stdout: bool = True, pipe_stderr: bool = True,
+                 wraplines: bool = False, shell: bool = False, **kwargs):
+        """
+        Run a terminal command, if any of pipe_stdout or pipe_stderr are set, command will be run in a pseudo-terminal (pty).
+
+        Args:
+            args:
+            pipe_stdout: Capture output from stdout
+            pipe_stderr: Capture output from stderr
+            wraplines: Wrap lines longer than widget width
+            shell: Run command in a shell (allows glob expansion, piping and redirection)
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(args=args, pipe_stdout=pipe_stdout, pipe_stderr=pipe_stderr, wraplines=wraplines, shell=shell,
                          **kwargs)
         self.args = args if shell or isinstance(args, list) else split(args)

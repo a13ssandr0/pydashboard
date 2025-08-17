@@ -19,6 +19,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Topic :: System :: Monitoring",
 ]
 license = "GPL-3.0-only"
@@ -32,6 +33,7 @@ dependencies = [
     "plumbum~=1.9.0",
     "psutil~=7.0.0",
     "pwntools~=4.14.1",
+    "python-benedict[yaml]~=0.34.1",
     "pyyaml~=6.0.2",
     "requests~=2.32.4",
     "requests-unixsocket~=0.4.1",

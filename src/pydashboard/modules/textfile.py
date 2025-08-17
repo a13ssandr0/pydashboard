@@ -28,6 +28,24 @@ class TextFile(BaseModule):
             refreshInterval: Literal['never'] | int | float | str = 'never',
             **kwargs
     ):
+        """
+
+        Args:
+            title:
+            path:
+            mode:
+            style:
+            emoji:
+            emoji_variant:
+            align:
+            overflow:
+            no_wrap:
+            end:
+            tab_size:
+            spans:
+            refreshInterval:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         if title is None:
             title = path
 

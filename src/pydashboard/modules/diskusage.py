@@ -42,9 +42,19 @@ class DiskUsage(TableModule):
     column_names = _names_map
     justify = _justify
 
-    def __init__(self, *, columns=None,
+    def __init__(self, *, columns: list[str] = None,
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] | None = 'mountpoint',
-                 exclude: list[str] = None, human_readable=True, sizes: list[int] = None, **kwargs):
+                 exclude: list[str] = None, human_readable: bool = True, sizes: list[int] = None, **kwargs):
+        """
+
+        Args:
+            columns:
+            sort:
+            exclude:
+            human_readable:
+            sizes:
+            **kwargs: See [TableModule](../containers/tablemodule.md)
+        """
         if columns is None:
             columns = ['device', 'fstype', 'total', 'used', 'free', 'percent', 'mountpoint']
         self.exclude = exclude

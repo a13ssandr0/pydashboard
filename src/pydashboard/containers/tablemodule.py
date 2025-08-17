@@ -19,6 +19,15 @@ class TableModule(BaseModule):
 
     def __init__(self, *, columns: list[str], show_header=False, sizes=None,
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] | None = None, **kwargs):
+        """
+
+        Args:
+            columns:
+            show_header:
+            sizes:
+            sort:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(columns=columns, show_header=show_header, sizes=sizes, sort=sort, **kwargs)
         self.columns = columns
         if sizes is None:

@@ -37,7 +37,7 @@ class BaseModule(ScrollableContainer):
     def __init__(self, *,
                  id: str = None,
                  mod_type: str = None,
-                 refreshInterval: Literal['never'] | int | float | str = None,
+                 refresh_interval: Literal['never'] | int | float | str = None,
                  align_horizontal: AlignHorizontal = "left",
                  align_vertical: AlignVertical = "top",
                  color: ColorProperty = None,
@@ -61,7 +61,33 @@ class BaseModule(ScrollableContainer):
                  # man ssh_config(5) - StrictHostKeyChecking
                  ssh_ignore_known_hosts_file: bool = False,
                  **kwargs):
-        """Init module and load config"""
+        """
+
+        Args:
+            refresh_interval: How often to update module data, accepts a value in seconds or string with a time unit.
+                                'never' disables updating
+            align_horizontal: Horizontal alignment of the text
+            align_vertical: Vertical alignment of the text
+            color: Color of the text
+            border: Border of the widget
+            title: Title of the widget
+            title_align: Alignment of the title
+            title_background: Background color of the title
+            title_color: Color of the title
+            title_style: Style of the title
+            subtitle: Title of the subwidget
+            subtitle_align: Alignment of the subtitle
+            subtitle_background: Background color of the subtitle
+            subtitle_color: Color of the subtitle
+            subtitle_style: Style of the subtitle
+            remote_host: Remote host IP or FQDN
+            remote_port: Remote host SSH port
+            remote_username: Remote host SSH username
+            remote_password: Remote host SSH password
+            remote_key: Remote host SSH key
+            ssh_strict_host_key_checking: Control host key verivification behaviour
+            ssh_ignore_known_hosts_file: Ignore known hosts file (suppresses host key changed warning)
+        """
         id = sub(r"[^\w\d\-_]", "_", id)
         if id[0].isdigit(): id = "_" + id
 
@@ -71,10 +97,10 @@ class BaseModule(ScrollableContainer):
         # noinspection PyTypeChecker
         self.on_ready = self.logger.catch()(self.on_ready)
 
-        if isinstance(refreshInterval, str) and refreshInterval != 'never':
-            refreshInterval = Duration(refreshInterval).to_seconds()
-        self.refreshInterval = refreshInterval
-        self.logger.info('Setting {} refresh interval to {} second(s)', id, refreshInterval)
+        if isinstance(refresh_interval, str) and refresh_interval != 'never':
+            refresh_interval = Duration(refresh_interval).to_seconds()
+        self.refresh_interval = refresh_interval
+        self.logger.info('Setting {} refresh interval to {} second(s)', id, refresh_interval)
 
         self.styles.align_horizontal = align_horizontal
         self.styles.align_vertical = align_vertical
@@ -94,7 +120,7 @@ class BaseModule(ScrollableContainer):
         self.styles.border_subtitle_style = subtitle_style
 
         self.__user_settings = {
-            'refreshInterval'                  : refreshInterval,
+            'refresh_interval'                  : refresh_interval,
             'styles.align_horizontal'          : align_horizontal,
             'styles.align_vertical'            : align_vertical,
             'styles.color'                     : color,
@@ -133,7 +159,7 @@ class BaseModule(ScrollableContainer):
         if remote_host:
             self.prepare_remote(remote_host, remote_port, remote_username, remote_password, remote_key, mod_type,
                                 ssh_strict_host_key_checking, ssh_ignore_known_hosts_file,
-                                id=id, refreshInterval=refreshInterval,
+                                id=id, refresh_interval=refresh_interval,
                                 align_horizontal=align_horizontal, align_vertical=align_vertical,
                                 color=color, border=border, title=title, title_align=title_align,
                                 title_background=title_background, title_color=title_color,
@@ -180,8 +206,8 @@ class BaseModule(ScrollableContainer):
 
     def set(self, key, value):
         match key:
-            case 'refreshInterval':
-                self.refreshInterval = value
+            case 'refresh_interval':
+                self.refresh_interval = value
             case 'styles.align_horizontal':
                 self.styles.align_horizontal = value
             case 'styles.align_vertical':
@@ -259,13 +285,13 @@ class BaseModule(ScrollableContainer):
                 self.reload_styles()
                 self.inject_dependencies(self.post_init_target, reference_func=self.__post_init__)
 
-                if self.refreshInterval == 'never':
+                if self.refresh_interval == 'never':
                     self.update()
                     return
 
                 while not signal.is_set():
                     self.update()
-                    self.interruptibleWait(self.refreshInterval, signal)
+                    self.interruptibleWait(self.refresh_interval, signal)
 
             except SSHCommsChannel2Error as e:
                 self.handle_remote_connection_exception("SSH: stderr not available", e, signal)
@@ -290,7 +316,7 @@ class BaseModule(ScrollableContainer):
             except Exception as e:
                 super().notify(traceback.format_exc(), severity='error')
                 self.logger.exception(str(e))
-                self.interruptibleWait(self.refreshInterval if self.refreshInterval != 'never' else 30, signal)
+                self.interruptibleWait(self.refresh_interval if self.refresh_interval != 'never' else 30, signal)
 
     def handle_remote_connection_exception(self, text, e, signal):
         self.styles.border = ("round", "red")

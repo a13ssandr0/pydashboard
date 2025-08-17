@@ -5,6 +5,15 @@ from pydashboard.containers import BaseModule
 
 class Octoprint(BaseModule):
     def __init__(self, *, host, token, port=80, scheme='http', **kwargs):
+        """
+
+        Args:
+            host:
+            token:
+            port:
+            scheme:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         for k in ['subtitle', 'subtitle_align', 'subtitle_background', 'subtitle_color', 'subtitle_style']:
             if k in kwargs:
                 del kwargs[k]

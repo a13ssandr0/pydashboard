@@ -163,6 +163,20 @@ class BitTorrent(TableModule):
     def __init__(self, *, host, username, password, port=8080, scheme='http',
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] = ('downloaded', False),
                  columns=None, human_readable=True, show_header=False, **kwargs):
+        """
+
+        Args:
+            host:
+            username:
+            password:
+            port:
+            scheme:
+            sort:
+            columns:
+            human_readable:
+            show_header:
+            **kwargs: See [TableModule](../containers/tablemodule.md)
+        """
         if columns is None:
             columns = ['state', 'progress', 'ratio', 'name']
         super().__init__(host=host, username=username, password=password, port=port, scheme=scheme,

@@ -7,6 +7,14 @@ from pydashboard.containers import BaseModule
 class Uptime(BaseModule):
 
     def __init__(self, *, compact: bool | Literal[0, 1, 2] = False, show_prefix=True, show_seconds=False, **kwargs):
+        """
+
+        Args:
+            compact:
+            show_prefix:
+            show_seconds:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(compact=compact, show_prefix=show_prefix, show_seconds=show_seconds, **kwargs)
         self.compact = compact
         self.show_prefix = show_prefix

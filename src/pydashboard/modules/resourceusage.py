@@ -9,32 +9,41 @@ from pydashboard.utils.numbers import safe_float_cast
 from pydashboard.utils.types import Size
 
 
-# noinspection PyPep8Naming
 class ResourceUsage(BaseModule):
-    def __init__(self, *, cpuCombined=True, showCPU=True, showMem=True, showSwp=True, showGPU=True, **kwargs):
-        super().__init__(cpuCombined=cpuCombined, showCPU=showCPU, showMem=showMem, showSwp=showSwp, showGPU=showGPU,
+    def __init__(self, *, cpu_combined=True, show_cpu=True, show_mem=True, show_swp=True, show_gpu=True, **kwargs):
+        """
+
+        Args:
+            cpu_combined:
+            show_cpu:
+            show_mem:
+            show_swp:
+            show_gpu:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
+        super().__init__(cpu_combined=cpu_combined, show_cpu=show_cpu, show_mem=show_mem, show_swp=show_swp, show_gpu=show_gpu,
                          **kwargs)
-        self.cpuCombined = cpuCombined
-        self.showCPU = showCPU
-        self.showMem = showMem
-        self.showSwp = showSwp
-        self.showGPU = showGPU
+        self.cpu_combined = cpu_combined
+        self.show_cpu = show_cpu
+        self.show_mem = show_mem
+        self.show_swp = show_swp
+        self.show_gpu = show_gpu
 
     def __call__(self, content_size: Size):
         bars = []
 
-        if self.showCPU:
-            bars.extend(self.get_cpu_data(self.cpuCombined))
+        if self.show_cpu:
+            bars.extend(self.get_cpu_data(self.cpu_combined))
 
-        if self.showMem:
+        if self.show_mem:
             vmem = ps.virtual_memory()
             bars.append([vmem.percent, f'{b2h(vmem.used)}/{b2h(vmem.total)}', 'Mem', 'green'])
 
-        if self.showSwp:
+        if self.show_swp:
             smem = ps.swap_memory()
             bars.append([smem.percent, f'{b2h(smem.used)}/{b2h(smem.total)}', 'Swp', 'green'])
 
-        if self.showGPU:
+        if self.show_gpu:
             bars.extend(self.get_gpu_data())
 
         return '\n'.join([create_bar(max_w=content_size[1],

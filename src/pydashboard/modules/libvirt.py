@@ -43,6 +43,13 @@ class Libvirt(BaseModule):
     def __init__(self, *, domain: str = None,
                  resource_usage: Literal['none', 'auto', 'onerow', 'tworow'] = 'auto',
                  **kwargs):
+        """
+
+        Args:
+            domain:
+            resource_usage:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(domain=domain, resource_usage=resource_usage, **kwargs)
         self.domain = domain
 

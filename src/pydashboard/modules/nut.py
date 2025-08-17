@@ -1,9 +1,9 @@
-from math import ceil, floor, isnan
+from math import isnan
 from os import environ
 from typing import Literal
 
 from pydashboard.containers import BaseModule
-from pydashboard.utils.bars import create_bar
+from pydashboard.utils.bars import calc_bars_sizes, create_bar
 from pydashboard.utils.types import Size
 
 environ['PWNLIB_NOTERM'] = 'true'
@@ -15,6 +15,19 @@ class NUT(BaseModule):
     def __init__(self, *, title=None, host="localhost", port=3493, upsname: str = None, username: str = None,
                  password: str = None, timeout=30, bars: Literal['auto', 0, 1, 2] = 0,
                  **kwargs):
+        """
+
+        Args:
+            title:
+            host:
+            port:
+            upsname:
+            username:
+            password:
+            timeout:
+            bars:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(title=title, host=host, port=port, upsname=upsname, username=username, password=password,
                          timeout=timeout, bars=bars, **kwargs)
         self.username = username
@@ -23,36 +36,23 @@ class NUT(BaseModule):
         self.host = host
         self.port = port
         self.timeout = timeout
+        self.bars = bars
         self.__model_as_title = title is None and upsname is not None
 
-        if bars == 'auto':
-            bars = 0
-        self.bars = bars
-
     def __post_init__(self, content_size: Size):
-        if self.bars < 1:
-            if content_size[1] < 22:
-                self.bars = 2
-            else:
-                self.bars = 1
-
-        if self.bars == 1:
-            self.lbar = ceil(content_size[1] / 2)
-            self.rbar = floor(content_size[1] / 2)
-        elif self.bars == 2:
-            self.lbar = self.rbar = content_size[1]
+        self.bars, self.lbar, self.rbar = calc_bars_sizes(content_size[1], self.bars)
 
     def __call__(self, content_size: Size):
         try:
             status = self.get()
         except TimeoutError:
-            return 'Connection timed out'
+            return '[red]Connection timed out[/red]'
         except ConnectionRefusedError:
-            return 'Offline or connection refused'
+            return '[red]Offline or connection refused[/red]'
         except RuntimeError as e:
-            return str(e)
+            return f"[red]{e}[/red]"
         except PwnlibException as e:
-            return str(e)
+            return f"[red]{e}[/red]"
 
         if self.__model_as_title:
             self.border_title = status[self.upsname]['friendly_name']
@@ -84,12 +84,6 @@ class NUT(BaseModule):
         else:
             last_xfer_reason = None
 
-        if not isnan(input_voltage):
-            ups_status += f' {round(input_voltage)}V'
-        spaces = content_width - len(friendly_name + ups_status)
-        if spaces < 2:
-            friendly_name = friendly_name[:spaces - 2]
-            spaces = 2
         name_color = 'yellow' if 'OFF' not in ups_status else 'green'
         load_color = 'green' if ups_load < ups_load_warn else ('yellow' if ups_load < ups_load_high else 'red')
         batt_color = 'green' if battery_charge > battery_warning else (
@@ -97,8 +91,7 @@ class NUT(BaseModule):
 
         load_power = f'{load_power}W ' if load_power is not None else ''
         if ups_load > -1:
-            load_bar = create_bar(self.lbar, ups_load, f'{load_power}{ups_load}%', '',
-                                  load_color)
+            load_bar = create_bar(self.lbar, ups_load, f'{load_power}{ups_load}%', '', load_color)
         else:
             load_bar = load_power
 
@@ -108,6 +101,13 @@ class NUT(BaseModule):
                                   f'{battery_runtime}{battery_charge}%', '', batt_color)
         else:
             batt_bar = battery_runtime
+
+        if not isnan(input_voltage):
+            ups_status += f' {round(input_voltage)}V'
+        spaces = content_width - len(friendly_name + ups_status)
+        if spaces < 2:
+            friendly_name = friendly_name[:spaces - 2]
+            spaces = 2
 
         header = f"[{name_color}]{friendly_name}[/{name_color}]" + ' ' * spaces + ups_status + '\n'
         if 'RB' in ups_status:

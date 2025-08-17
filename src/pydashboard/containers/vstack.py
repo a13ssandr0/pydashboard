@@ -14,13 +14,21 @@ class Vstack(BaseModule):
     ready_hooks = {}
 
     def __init__(self, *, mods: dict[str, dict[str, Any]], defaults=None, order=None, **kwargs):
+        """
+
+        Args:
+            mods:
+            defaults:
+            order:
+            **kwargs: See [BaseModule](../containers/basemodule.md)
+        """
         super().__init__(mods=mods, defaults=defaults, order=order, **kwargs)
         if defaults is None:
             defaults = {}
         self.order = [] if order is None else order
         self.modules = OrderedDict()
 
-        defaults['refreshInterval'] = self.refreshInterval
+        defaults['refreshInterval'] = self.refresh_interval
 
         for w_id, conf in mods.items():
             if conf is None: conf = {}
