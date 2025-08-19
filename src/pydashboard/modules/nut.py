@@ -1,6 +1,6 @@
 from math import isnan
 from os import environ
-from typing import Literal
+from typing import Any, Literal
 
 from pydashboard.containers import BaseModule
 from pydashboard.utils.bars import calc_bars_sizes, create_bar
@@ -12,20 +12,21 @@ from pwnlib.tubes.remote import remote
 
 
 class NUT(BaseModule):
-    def __init__(self, *, title=None, host="localhost", port=3493, upsname: str = None, username: str = None,
-                 password: str = None, timeout=30, bars: Literal['auto', 0, 1, 2] = 0,
-                 **kwargs):
+    def __init__(self, *, title: str = None, host: str = "localhost", port: int = 3493, upsname: str = None,
+                 username: str = None, password: str = None, timeout: int = 30, bars: Literal['auto', 0, 1, 2] = 0,
+                 **kwargs: Any):
         """
+        Displays information about UPSes connected to a Network Ups Tools server.
 
         Args:
-            title:
-            host:
-            port:
-            upsname:
-            username:
-            password:
-            timeout:
-            bars:
+            title: if not set or null defaults to ups name if upsname is set
+            host: NUT server IP or FQDN
+            port: NUT server port
+            upsname: UPS name, if not set or null all UPSes will be shown
+            username: NUT username
+            password: NUT password
+            timeout: Connection timeout seconds
+            bars: whether to show status bars on 1 or 2 lines or automatically ('auto', 0)
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
         super().__init__(title=title, host=host, port=port, upsname=upsname, username=username, password=password,

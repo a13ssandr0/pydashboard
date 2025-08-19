@@ -1,5 +1,6 @@
 from json import JSONDecodeError
 from re import compile
+from typing import Any
 
 import urllib3
 from requests import get
@@ -23,16 +24,36 @@ def color_state(state):
 
 
 class HomeAssistant(BaseModule):
-    def __init__(self, *, host, token, filters: list[str], port=8123, scheme='https', **kwargs):
+    def __init__(self, *, host: str, token: str, filters: list[str], port: int = 8123, scheme: str = 'https',
+                 **kwargs: Any):
         """
 
         Args:
-            host:
-            token:
-            filters:
-            port:
-            scheme:
+            host: HomeAssistant server IP or FQDN
+            token: HomeAssistant API token
+            filters: RegEx string to filter entities
+            port: HomeAssistant server port
+            scheme: http or https
             **kwargs: See [BaseModule](../containers/basemodule.md)
+
+        # Example filters
+        ```title="Show all lights"
+        light\\.
+        ```
+        ```title="Show all lights except hidden ones"
+        light\\.(?!.*_hidden$).*
+        ```
+        ```title="Show all binary sensors with `switch` or `button` in their name"
+        binary_sensor\\.(?:(?:switch)|(?:button))
+        ```
+
+        Filters must be enclosed in quotes and passed as a list:
+        ```yaml
+        homeassistant:
+          host: ...
+          token: ...
+          filters: ["binary_sensor\\.(?:(?:switch)|(?:button))"]
+        ```
         """
         super().__init__(host=host, token=token, filters=filters, port=port, scheme=scheme, **kwargs)
         self.host = host

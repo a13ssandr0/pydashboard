@@ -1,4 +1,4 @@
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 
 from pandas import DataFrame
 from rich.text import Text
@@ -17,16 +17,19 @@ class TableModule(BaseModule):
     justify: dict[str, Literal["default", "left", "center", "right", "full"] | None] = {}
     colorize = None
 
-    def __init__(self, *, columns: list[str], show_header=False, sizes=None,
-                 sort: str | tuple[str, bool] | list[str | tuple[str, bool]] | None = None, **kwargs):
+    def __init__(self, *, columns: list[str] = None, show_header:bool=False, sizes:list[int]=None,
+                 sort: str | tuple[str, bool] | list[str | tuple[str, bool]] = None, **kwargs: Any):
         """
 
         Args:
-            columns:
-            show_header:
-            sizes:
-            sort:
-            **kwargs: See [BaseModule](../containers/basemodule.md)
+            columns: A list of columns to show. Default shows all columns.
+            show_header: Set true to show table header.
+            sizes: Width (in characters) of each column, 0 fits content. If list is shorted than number
+                    of columns, missing column widths will default to 0.
+            sort: See [Sorting](tablemodule.md#sorting)
+            **kwargs: See [BaseModule](basemodule.md)
+
+
         """
         super().__init__(columns=columns, show_header=show_header, sizes=sizes, sort=sort, **kwargs)
         self.columns = columns

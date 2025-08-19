@@ -3,6 +3,7 @@ import pty
 from select import select
 from shlex import split
 from subprocess import run
+from typing import Any
 
 from pydashboard.containers import BaseModule
 from pydashboard.utils.types import Size
@@ -10,7 +11,7 @@ from pydashboard.utils.types import Size
 
 class CmdRunner(BaseModule):
     def __init__(self, *, args: str | list[str], pipe_stdout: bool = True, pipe_stderr: bool = True,
-                 wraplines: bool = False, shell: bool = False, **kwargs):
+                 wraplines: bool = False, shell: bool = False, **kwargs: Any):
         """
         Run a terminal command, if any of pipe_stdout or pipe_stderr are set, command will be run in a pseudo-terminal (pty).
 

@@ -1,11 +1,11 @@
 from math import ceil, floor
-from typing import Literal
+from typing import Any, Literal
 
 try:
     # noinspection PyUnresolvedReferences
     from libvirt import VIR_CONNECT_LIST_DOMAINS_ACTIVE, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_CRASHED, \
         VIR_DOMAIN_NOSTATE, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED, VIR_DOMAIN_RUNNING, VIR_DOMAIN_SHUTDOWN, \
-        VIR_DOMAIN_SHUTOFF, open as virconnect_open, virDomain
+        VIR_DOMAIN_SHUTOFF, openReadOnly, virDomain
 except ImportError:
     raise ImportError("libvirt module is not available: you need to install 'pydashboard[libvirt]' to use this module.")
 
@@ -40,18 +40,38 @@ _color_state_map = {
 class Libvirt(BaseModule):
     times = {}
 
-    def __init__(self, *, domain: str = None,
+    def __init__(self, *, hypervisor_uri: str = 'qemu:///system',
                  resource_usage: Literal['none', 'auto', 'onerow', 'tworow'] = 'auto',
-                 **kwargs):
+                 **kwargs: Any):
         """
+        !!! warning
+            This module requires module `libvirt` to be installed. As this requires an external dependency, it must be
+            installed explicitly after installing the missing dependency. See [Installation](../getting_started.md/#libvirt).
 
         Args:
-            domain:
-            resource_usage:
+            hypervisor_uri: [Local](https://libvirt.org/uri.html#local-hypervisor-uris) or
+                            [Remote](https://libvirt.org/uri.html#remote-uris) hypervisor URIs
+            resource_usage: CPU and RAM usage bars style
             **kwargs: See [BaseModule](../containers/basemodule.md)
+
+        !!! warning
+            This module needs the user to be in the `libvirt` group to get sufficient permissions to connect to libvirt.
+            If not present yet, the `libvirt` group has to be created.
+            ```bash
+            sudo addgroup libvirt
+            sudo adduser $(whoami) libvirt
+            ```
+
+            It's totally fine if the above command produce the following outputs:
+            ``` title="sudo addgroup libvirt"
+            fatal: The group `libvirt' already exists.
+            ```
+            ``` title="sudo adduser $(whoami) libvirt"
+            info: The user `alessandro' is already a member of `libvirt'.
+            ```
         """
-        super().__init__(domain=domain, resource_usage=resource_usage, **kwargs)
-        self.domain = domain
+        super().__init__(hypervisor_uri=hypervisor_uri, resource_usage=resource_usage, **kwargs)
+        self.hypervisor_uri = hypervisor_uri
 
         if resource_usage == 'none':
             self.resource_rows = 0
@@ -63,7 +83,7 @@ class Libvirt(BaseModule):
             self.resource_rows = 2
 
         if self.resource_rows > 0:
-            with virconnect_open(self.domain) as conn:
+            with openReadOnly(self.hypervisor_uri) as conn:
                 self.times = {
                     dom.name(): self.dom_cpu_dict(dom)
                     for dom in conn.listAllDomains(VIR_CONNECT_LIST_DOMAINS_ACTIVE)
@@ -84,7 +104,7 @@ class Libvirt(BaseModule):
         }
 
     def __call__(self, content_size: Size):
-        with virconnect_open(self.domain) as conn:
+        with openReadOnly(self.hypervisor_uri) as conn:
             states = [
                 (dom.name(), _state_map.get(dom.state()[0], "unknown"))
                 for dom in conn.listAllDomains()
@@ -125,7 +145,7 @@ class Libvirt(BaseModule):
                     cpu = 0
                 else:
                     cpu_delta = new_times[name]['cpu_time'] - self.times[name]['cpu_time']
-                    cpu = cpu_delta / (1e9 * new_times[name]['vcpus'] * self.refreshInterval)
+                    cpu = cpu_delta / (1e9 * new_times[name]['vcpus'] * self.refresh_interval)
 
                 self.times = new_times
 

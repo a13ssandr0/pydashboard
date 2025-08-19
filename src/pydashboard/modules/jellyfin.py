@@ -1,4 +1,5 @@
 from json import JSONDecodeError
+from typing import Any
 
 from requests import get
 from requests.exceptions import ConnectionError
@@ -11,14 +12,14 @@ def tick_to_seconds(ticks): return ticks / 10_000_000
 
 
 class Jellyfin(BaseModule):
-    def __init__(self, *, host, token, port=443, scheme='https', **kwargs):
+    def __init__(self, *, host: str, token: str, port: int = 443, scheme: str = 'https', **kwargs: Any):
         """
 
         Args:
-            host:
-            token:
-            port:
-            scheme:
+            host: Jellyfin server IP or FQDN
+            token: Jellyfin API token
+            port: Jellyfin server port
+            scheme: http or https
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
         super().__init__(host=host, token=token, port=port, scheme=scheme, **kwargs)
@@ -31,7 +32,17 @@ class Jellyfin(BaseModule):
 
     def __call__(self):
         try:
-            sessions = get(self.url, headers=self.headers).json()
+            response = get(self.url, headers=self.headers)
+
+            try:
+                sessions = response.json()
+            except JSONDecodeError as e:
+                self.border_subtitle = f'JSONDecodeError'
+                self.styles.border_subtitle_color = 'red'
+                self.logger.critical(str(e))
+                self.logger.debug(response.text)
+                return None
+
             users = ''
             for s in sessions:
                 users += f"[yellow]{s.get('UserName', '')}[/yellow] @ {s.get('DeviceName', '')}\n"
@@ -69,10 +80,7 @@ class Jellyfin(BaseModule):
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'
             self.logger.critical(str(e))
-        except JSONDecodeError as e:
-            self.border_subtitle = f'JSONDecodeError'
-            self.styles.border_subtitle_color = 'red'
-            self.logger.critical(str(e))
+
 
 
 widget = Jellyfin

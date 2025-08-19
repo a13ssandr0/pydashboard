@@ -1,3 +1,5 @@
+from typing import Any
+
 from pandas import DataFrame
 from requests import JSONDecodeError, Session
 from requests.exceptions import ConnectionError
@@ -156,31 +158,82 @@ def colorize(state):
     return f'[{c}]{state}[/{c}]'
 
 
-class BitTorrent(TableModule):
+class QBitTorrent(TableModule):
     justify = _justify
     colorize = {'state': colorize}
 
-    def __init__(self, *, host, username, password, port=8080, scheme='http',
+    def __init__(self, *, host: str, username: str, password: str, port: int = 8080, scheme: str = 'http',
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] = ('downloaded', False),
-                 columns=None, human_readable=True, show_header=False, **kwargs):
+                 columns: list[str] = ('state', 'progress', 'ratio', 'name'), human_readable: bool = True,
+                 **kwargs: Any):
         """
 
         Args:
-            host:
-            username:
-            password:
-            port:
-            scheme:
-            sort:
-            columns:
-            human_readable:
-            show_header:
+            host: qBittorrent server IP or FQDN
+            username: qBittorrent username
+            password: qBittorrent password
+            port: qBittorrent server port
+            scheme: http or https
+            sort: See [Sorting](../containers/tablemodule.md#sorting)
+            columns: See [Available columns](qbittorrent.md#qbittorrent.QBitTorrent--available-columns)
+            human_readable: Convert numbers to human readable strings
             **kwargs: See [TableModule](../containers/tablemodule.md)
+
+        # Available columns:
+        Source: [qBittorrent WebUI API](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-torrent-list)
+
+        Name                 | Description
+        ---------------------|------------
+        `added_on`           | Time (Unix Epoch) when the torrent was added to the client
+        `amount_left`        | Amount of data left to download (bytes)
+        `auto_tmm`           | Whether this torrent is managed by Automatic Torrent Management
+        `availability`       | Percentage of file pieces currently available
+        `category`           | Category of the torrent
+        `completed`          | Amount of transfer data completed (bytes)
+        `completion_on`      | Time (Unix Epoch) when the torrent completed
+        `content_path`       | Absolute path of torrent content (root path for multifile torrents, absolute file path for singlefile torrents)
+        `dl_limit`           | Torrent download speed limit (bytes/s). `-1` if unlimited.
+        `dlspeed`            | Torrent download speed (bytes/s)
+        `downloaded`         | Amount of data downloaded
+        `downloaded_session` | Amount of data downloaded this session
+        `eta`                | Torrent ETA (seconds)
+        `f_l_piece_prio`     | True if first last piece are prioritized
+        `force_start`        | True if force start is enabled for this torrent
+        `hash`               | Torrent hash
+        `isPrivate`          | True if torrent is from a private tracker (added in 5.0.0)
+        `last_activity`      | Last time (Unix Epoch) when a chunk was downloaded/uploaded
+        `magnet_uri`         | Magnet URI corresponding to this torrent
+        `max_ratio`          | Maximum share ratio until torrent is stopped from seeding/uploading
+        `max_seeding_time`   | Maximum seeding time (seconds) until torrent is stopped from seeding
+        `name`               | Torrent name
+        `num_complete`       | Number of seeds in the swarm
+        `num_incomplete`     | Number of leechers in the swarm
+        `num_leechs`         | Number of leechers connected to
+        `num_seeds`          | Number of seeds connected to
+        `priority`           | Torrent priority. Returns -1 if queuing is disabled or torrent is in seed mode
+        `progress`           | Torrent progress (percentage/100)
+        `ratio`              | Torrent share ratio. Max ratio value: 9999.
+        `ratio_limit`        | TODO (what is different from `max_ratio`?)
+        `reannounce`         | Time until the next tracker reannounce
+        `save_path`          | Path where this torrent's data is stored
+        `seeding_time`       | Torrent elapsed time while complete (seconds)
+        `seeding_time_limit` | TODO (what is different from `max_seeding_time`?) seeding_time_limit is a per torrent setting, when Automatic Torrent Management is disabled, furthermore then max_seeding_time is set to seeding_time_limit for this torrent. If Automatic Torrent Management is enabled, the value is -2. And if max_seeding_time is unset it have a default value -1.
+        `seen_complete`      | Time (Unix Epoch) when this torrent was last seen complete
+        `seq_dl`             | True if sequential download is enabled
+        `size`               | Total size (bytes) of files selected for download
+        `state`              | Torrent state. See table here below for the possible values
+        `super_seeding`      | True if super seeding is enabled
+        `tags`               | Comma-concatenated tag list of the torrent
+        `time_active`        | Total active time (seconds)
+        `total_size`         | Total size (bytes) of all file in this torrent (including unselected ones)
+        `tracker`            | The first tracker with working status. Returns empty string if no tracker is working.
+        `up_limit`           | Torrent upload speed limit (bytes/s). `-1` if unlimited.
+        `uploaded`           | Amount of data uploaded
+        `uploaded_session`   | Amount of data uploaded this session
+        `upspeed`            | Torrent upload speed (bytes/s)
         """
-        if columns is None:
-            columns = ['state', 'progress', 'ratio', 'name']
-        super().__init__(host=host, username=username, password=password, port=port, scheme=scheme,
-                         human_readable=human_readable, columns=columns, show_header=show_header, sort=sort, **kwargs)
+        super().__init__(host=host, username=username, password=password, port=port, scheme=scheme, sort=sort,
+                         columns=columns, human_readable=human_readable, **kwargs)
         self.host = host
         self.username = username
         self.password = password
@@ -229,4 +282,4 @@ class BitTorrent(TableModule):
             self.logger.critical(str(e))
 
 
-widget = BitTorrent
+widget = QBitTorrent

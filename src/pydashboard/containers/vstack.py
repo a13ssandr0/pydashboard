@@ -13,13 +13,27 @@ class Vstack(BaseModule):
     inner: VerticalGroup = VerticalGroup
     ready_hooks = {}
 
-    def __init__(self, *, mods: dict[str, dict[str, Any]], defaults=None, order=None, **kwargs):
+    def __init__(self, *, mods: dict[str, dict[str, Any]], defaults: dict[str, Any] = None, order: list[str] = None,
+                 **kwargs: Any):
         """
+        Vertical stack of widgets that automatically fit content height.
+
+        !!! info
+            For better experience it's recommended to set `border: None` in `defaults:` to have all widgets inside one
+            and only one border, appearing as a single widget.
+            ```yaml
+            mods:
+                vstack:
+                    defaults:
+                        border: None
+                    mods:
+                        # ...
+            ```
 
         Args:
-            mods:
-            defaults:
-            order:
+            mods: See [Widget definitions](../config_file.md)
+            defaults: See [Defaults](../config_file.md/#defaults-and-common-settings)
+            order: List of widget IDs to manually define widget order
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
         super().__init__(mods=mods, defaults=defaults, order=order, **kwargs)
@@ -28,7 +42,7 @@ class Vstack(BaseModule):
         self.order = [] if order is None else order
         self.modules = OrderedDict()
 
-        defaults['refreshInterval'] = self.refresh_interval
+        defaults['refresh_interval'] = self.refresh_interval
 
         for w_id, conf in mods.items():
             if conf is None: conf = {}

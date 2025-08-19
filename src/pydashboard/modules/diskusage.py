@@ -1,3 +1,5 @@
+from typing import Any
+
 import psutil
 from pandas import DataFrame
 
@@ -42,24 +44,21 @@ class DiskUsage(TableModule):
     column_names = _names_map
     justify = _justify
 
-    def __init__(self, *, columns: list[str] = None,
+    def __init__(self, *, columns: list[str] = ('device', 'fstype', 'total', 'used', 'free', 'percent', 'mountpoint'),
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] | None = 'mountpoint',
-                 exclude: list[str] = None, human_readable: bool = True, sizes: list[int] = None, **kwargs):
+                 exclude: list[str] = None, human_readable: bool = True, **kwargs: Any):
         """
 
         Args:
-            columns:
-            sort:
-            exclude:
-            human_readable:
-            sizes:
+            columns: Available columns: <br>`device`, `mountpoint`, `fstype`, `opts`, `total`, `used`, `free`, `percent`
+            sort: See [Sorting](../containers/tablemodule.md#sorting)
+            exclude: Filesystem types to exclude
+            human_readable: Convert sizes to human readable strings
             **kwargs: See [TableModule](../containers/tablemodule.md)
         """
-        if columns is None:
-            columns = ['device', 'fstype', 'total', 'used', 'free', 'percent', 'mountpoint']
         self.exclude = exclude
         self.humanize = _human if human_readable else None
-        super().__init__(columns=columns, show_header=True, exclude=exclude, human_readable=human_readable, sizes=sizes,
+        super().__init__(columns=columns, show_header=True, exclude=exclude, human_readable=human_readable,
                          sort=sort, **kwargs)
 
     def __call__(self):

@@ -9,7 +9,7 @@ ansi_color: false
 defaults:
   border: ["round", "cyan"]
   title_color: lightgreen
-  refreshInterval: 1
+  refresh_interval: 1
 grid:
   columns: [10, 10, 10, 10]
   rows: [9, 7, 3, 7, 5]
@@ -21,11 +21,69 @@ mods:
       height: 1
       width: 1
 ```
+!!! note
+    Keys can be written both in `camelCase` and `snake_case` and are case-insensitive (`bORdeR` is the same as `border`).
+
+## Modules and widgets
+PyDashboard provides several modules, each one can be loaded to be displayed in a widget. Usually, when you want to
+place a new widget, you just need to add a new entry with the module name under the `mods:` section.
+
+Sometimes you may need to add multiple widgets based on the same module (for example multiple 
+[`cmdrunner`](modules/cmdrunner.md) widgets), in these cases you can use another name as key of the entry and then
+specify the module type in the configuration of the widget.
+```yaml
+# ...
+mods:
+  # ...
+  custom_module_one:
+    # ...
+    type: cmdrunner
+  custom_module_two:
+    # ...
+    type: cmdrunner
+```
+
+If you don't like this syntax because it's too much verbose, you can also append a `%` to the module name, followed by
+a custom name or identifier (it can even be only a number).
+
+<div class="grid cards" markdown>
+```yaml
+# ...
+mods:
+  # ...
+  cmdrunner%module_one:
+    # ...
+  cmdrunner%module_two:
+    # ...
+```
+
+```yaml
+# ...
+mods:
+  # ...
+  cmdrunner%1:
+    # ...
+  cmdrunner%2:
+    # ...
+```
+</div>
 
 
 ## Positioning
 The terminal can be considered like a screen with pixels, but in this case the "pixels" are 
 the individual characters, for example a 80x50 terminal means 80 characters wide and 50 characters tall.
+
+!!! note "Getting terminal size"
+    To know the size of the terminal that will host PyDashboard run `stty -a`. 
+    The first row will output the required information.
+    ``` hl_lines="1"
+    speed 38400 baud; rows 50; columns 160; line = 0;
+    intr = ^C; quit = ^\; erase = ^?; kill = ^U; eof = ^D; eol = <undef>; eol2 = <undef>; swtch = <undef>; start = ^Q; stop = ^S; susp = ^Z; rprnt = ^R; werase = ^W; lnext = ^V; discard = ^O; min = 1; time = 0;
+    -parenb -parodd -cmspar cs8 hupcl -cstopb cread -clocal -crtscts
+    -ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff -iuclc -ixany -imaxbel iutf8
+    opost -olcuc -ocrnl onlcr -onocr -onlret -ofill -ofdel nl0 cr0 tab0 bs0 vt0 ff0
+    -isig -icanon -iexten -echo echoe echok -echonl -noflsh -xcase -tostop -echoprt echoctl echoke -flusho -extproc
+    ```
 
 Using the characters as reference, placing the widgets on the dashboard can be done in two ways:
 
@@ -64,7 +122,7 @@ respectively, starting from the top left corner of the screen, the remaining spa
 ----------------------------------------
 ```
 As you can see the effective size of each widget is smaller than the specified size due to the
-border, this behaviour can be controlled by [setting the border]().
+border, this behaviour can be controlled by [setting the border](advanced/styling.md).
 
 Back to the example above, let's place the clock: inside the `mods:` section we define a `clock:`
 section with a `position:` section that requires 4 parameters:
@@ -201,7 +259,7 @@ Producing this result:
 
 
 ## Defaults and common settings
-When applying certain settings, for example [styles](), you may need apply the same settings to every widget
+When applying certain settings, for example [styles](advanced/styling.md), you may need apply the same settings to every widget
 without having to repeat them many times across the file.
 
 In the `defaults:` section you can define default values for each parameter accepted by a widget, then, when 
@@ -223,9 +281,8 @@ defaults:
   border: ["round", "cyan"]
 ```
 
-3. default values defined in module code 
+3. default values defined in module code. See [BaseModule](containers/basemodule.md)
 ```python
-## taken from containers.basemodule.BaseModule.__init__
 def __init__(
     ...
     border: ... = ("round", "white"),
@@ -239,7 +296,7 @@ This example sets the default border to round, cyan, the title color to green an
 defaults:
   border: ["round", "cyan"]
   title_color: lightgreen
-  refreshInterval: 1
+  refresh_interval: 1
 ```
 
 
@@ -278,3 +335,5 @@ this setting effectively does nothing, except for using the terminal background 
 `ansi_color: true`
 ///
 </div>
+
+See: [Textual App Basics - ANSI Colors](https://textual.textualize.io/guide/app/#ansi-colors)

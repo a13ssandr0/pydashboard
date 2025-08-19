@@ -1,4 +1,5 @@
 from subprocess import PIPE, run
+from typing import Any
 
 import psutil as ps
 from psutil._common import bytes2human as b2h, shwtemp
@@ -10,19 +11,20 @@ from pydashboard.utils.types import Size
 
 
 class ResourceUsage(BaseModule):
-    def __init__(self, *, cpu_combined=True, show_cpu=True, show_mem=True, show_swp=True, show_gpu=True, **kwargs):
+    def __init__(self, *, cpu_combined: bool = True, show_cpu: bool = True, show_mem: bool = True,
+                 show_swp: bool = True, show_gpu: bool = True, **kwargs: Any):
         """
 
         Args:
-            cpu_combined:
-            show_cpu:
-            show_mem:
-            show_swp:
-            show_gpu:
+            cpu_combined: Combine all CPUs in a single bar
+            show_cpu: Show CPU usage
+            show_mem: Show RAM usage
+            show_swp: Show swap usage
+            show_gpu: Show GPU usage
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
-        super().__init__(cpu_combined=cpu_combined, show_cpu=show_cpu, show_mem=show_mem, show_swp=show_swp, show_gpu=show_gpu,
-                         **kwargs)
+        super().__init__(cpu_combined=cpu_combined, show_cpu=show_cpu, show_mem=show_mem, show_swp=show_swp,
+                         show_gpu=show_gpu, **kwargs)
         self.cpu_combined = cpu_combined
         self.show_cpu = show_cpu
         self.show_mem = show_mem
@@ -78,7 +80,6 @@ class ResourceUsage(BaseModule):
                 bars.append([p, text, str(i), 'red'])
 
         return bars
-
 
     def get_gpu_data(self):
         """Extracted from GPUtil https://github.com/anderskm/gputil/tree/master"""

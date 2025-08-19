@@ -1,6 +1,7 @@
 from functools import cache
 from threading import Timer
 from time import strftime
+from typing import Any
 
 import feedparser
 import requests
@@ -23,15 +24,17 @@ class FeedReader(TableModule):
 
     __cache = {}
 
-    def __init__(self, *, feeds: list[str], show_source=True, show_publish_date=True, show_index=False, limit=20, **kwargs):
+    def __init__(self, *, feeds: list[str], show_source: bool = True, show_publish_date: bool = True,
+                 show_index: bool = False, limit: int = 20, **kwargs: Any):
         """
+        RSS feed reader.
 
         Args:
-            feeds:
-            show_source:
-            show_publish_date:
-            show_index:
-            limit:
+            feeds: List of RSS URLs
+            show_source: Show feed entry source
+            show_publish_date: Show feed entry publish date
+            show_index: Show feed entry index
+            limit: How many entries to show
             **kwargs: See [TableModule](../containers/tablemodule.md)
         """
         columns = []

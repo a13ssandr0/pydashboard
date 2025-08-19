@@ -1,18 +1,24 @@
 from datetime import timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from pydashboard.containers import BaseModule
 
 
 class Uptime(BaseModule):
 
-    def __init__(self, *, compact: bool | Literal[0, 1, 2] = False, show_prefix=True, show_seconds=False, **kwargs):
+    def __init__(self, *, compact: bool | Literal[0, 1, 2] = False, show_prefix: bool = True,
+                 show_seconds: bool = False, **kwargs: Any):
         """
 
         Args:
             compact:
-            show_prefix:
-            show_seconds:
+                | Value     | Result                                |
+                |----------:|---------------------------------------|
+                |0 or False | 5 days, 4 hours, 3 minutes, 2 seconds |
+                |1 or True  | 5 d, 4 h, 3 m, 2 s                    |
+                |2          | 5d 04:03:02                           |
+            show_prefix: Show "uptime" or "up" prefix
+            show_seconds: Also show seconds
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
         super().__init__(compact=compact, show_prefix=show_prefix, show_seconds=show_seconds, **kwargs)

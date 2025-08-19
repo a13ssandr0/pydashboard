@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydashboard.containers import BaseModule
 
@@ -8,7 +8,7 @@ class Clock(BaseModule):
 
     # noinspection PyShadowingBuiltins
     def __init__(self, *, font: Literal['digitalFont', 'bigFont', 'boldFont'] = 'bigFont', format: str = None,
-                 compact: bool = False, show_seconds: bool = False, **kwargs):
+                 compact: bool = False, show_seconds: bool = False, **kwargs: Any):
         """
         Args:
             font:

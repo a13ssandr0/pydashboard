@@ -1,3 +1,4 @@
+from typing import Any
 from urllib.parse import quote
 
 import requests
@@ -10,26 +11,50 @@ from pydashboard.containers import BaseModule
 class Weather(BaseModule):
     __cache = ''
 
-    def __init__(self, location: str, language: str = None,
-                 narrow=False, metric: bool | None = None, speed_in_m_s=False,
-                 today_forecast=False, tomorrow_forecast=False,
-                 quiet=True, show_city=False, no_colors=False, console_glyphs=False,
-                 **kwargs):
+    def __init__(self, location: str, language: str = None, narrow: bool = False, metric: bool = None,
+                 speed_in_m_s: bool = False, today_forecast: bool = False, tomorrow_forecast: bool = False,
+                 quiet: bool = True, show_city: bool = False, no_colors: bool = False, console_glyphs: bool = False,
+                 **kwargs: Any):
         """
+        See [wttr.in/:help](https://wttr.in/:help)
 
         Args:
-            location:
-            language:
-            narrow:
-            metric:
-            speed_in_m_s:
-            today_forecast:
-            tomorrow_forecast:
-            quiet:
-            show_city:
-            no_colors:
-            console_glyphs:
+            location: See [Supported location types](#supported-location-types)
+            language: Show weather information in this language
+            narrow: Show only day and night
+            metric: Show units using the metric system (SI) (used by default everywhere except US)
+            speed_in_m_s: Show wind speed in m/s
+            today_forecast: Show current weather and today forecast
+            tomorrow_forecast: Show current weather, today forecast and tomorrow forecast. If True, `today_forecast` will be ignored.
+            quiet: Be quiet: no "Weather report" text
+            show_city: Super quiet: hide city name. Requires "quiet=True"
+            no_colors: Disable colored output
+            console_glyphs: If true disables use of advanced terminal features like emojis.
             **kwargs: See [BaseModule](../containers/basemodule.md)
+
+
+        # Supported location types
+
+        | Example               |Description                                  |
+        |-----------------------|---------------------------------------------|
+        |`paris`                | city name                                   |
+        |`~Eiffel+tower`        | any location (+ for spaces)                 |
+        |`Москва`               | Unicode name of any location in any language|
+        |`muc`                  | airport code (3 letters)                    |
+        |`@stackoverflow.com`   | domain name                                 |
+        |`94107`                | area codes                                  |
+        |`-78.46,106.79`        | GPS coordinates                             |
+
+        Location also supports moon phase information:
+
+        | Example               |Description                                          |
+        |-----------------------|-----------------------------------------------------|
+        |`moon`                 | Moon phase (add ,+US or ,+France for these cities)  |
+        |`moon@2016-10-25`      | Moon phase for the date (@2016-10-25)               |
+
+        !!! warning
+            Refer to [wttr.in](https://wttr.in/:help) documentation for updated supported location types.
+
         """
         super().__init__(location=location, language=language, narrow=narrow, metric=metric, speed_in_m_s=speed_in_m_s,
                          today_forecast=today_forecast, tomorrow_forecast=tomorrow_forecast, quiet=quiet,
@@ -48,7 +73,7 @@ class Weather(BaseModule):
 
         # noinspection HttpUrlsUsage
         self.url = 'http://wttr.in/' + self.location + '?AF'
-        if today_forecast and tomorrow_forecast:
+        if tomorrow_forecast:
             self.url += '2'  # current weather + today's + tomorrow's forecastc
         elif today_forecast:
             self.url += '1'  # current weather + today's forecast

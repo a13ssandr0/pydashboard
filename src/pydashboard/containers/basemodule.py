@@ -5,7 +5,7 @@ from random import randint
 from re import sub
 from threading import Event
 from time import sleep
-from typing import Literal
+from typing import Any, Literal
 
 from durations import Duration
 from loguru import logger
@@ -60,7 +60,7 @@ class BaseModule(ScrollableContainer):
                  ssh_strict_host_key_checking: Literal[None, True, False, 'accept-new'] = None,
                  # man ssh_config(5) - StrictHostKeyChecking
                  ssh_ignore_known_hosts_file: bool = False,
-                 **kwargs):
+                 **kwargs: Any):
         """
 
         Args:

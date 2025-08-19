@@ -1,6 +1,7 @@
 import re
 from os.path import splitext
 from subprocess import run
+from typing import Any
 
 from pydashboard.containers import BaseModule
 from pydashboard.utils.types import Size
@@ -100,11 +101,12 @@ def sysctl_states_map(status):
 
 class Systemctl(BaseModule):
 
-    def __init__(self, *, units=None, **kwargs):
+    def __init__(self, *, units: list[str] = None, **kwargs: Any):
         """
+        Show the status of chosen systemd units (like services and timers) and list failed ones.
 
         Args:
-            units:
+            units: List of unit names to monitor
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
         super().__init__(units=units, **kwargs)

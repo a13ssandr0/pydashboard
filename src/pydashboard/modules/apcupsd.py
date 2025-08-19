@@ -2,7 +2,7 @@ import socket
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from math import isnan
-from typing import Literal
+from typing import Any, Literal
 
 from pydashboard.containers import BaseModule
 from pydashboard.utils.bars import calc_bars_sizes, create_bar
@@ -28,22 +28,23 @@ ALL_UNITS = (
 
 class APCUPSd(BaseModule):
 
-    def __init__(self, *, host: str = "localhost", port: int = 3551, timeout: int = 30,
-                 bars: Literal['auto', 0, 1, 2] = 0, **kwargs):
+    def __init__(self, *, title: str = None, host: str = "localhost", port: int = 3551, timeout: int = 30,
+                 bars: Literal['auto', 0, 1, 2] = 0, **kwargs: Any):
         """
         Args:
+            title: if not set or null defaults to ups model
             host: APCUPSd server address
             port: APCUPSd server port
-            timeout: connection timeout seconds
-            bars:
+            timeout: Connection timeout seconds
+            bars: Whether to show status bars on 1 or 2 lines or automatically ('auto', 0)
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
-        super().__init__(host=host, port=port, timeout=timeout, bars=bars, **kwargs)
+        super().__init__(title=title, host=host, port=port, timeout=timeout, bars=bars, **kwargs)
         self.host = host
         self.port = port
         self.timeout = timeout
         self.bars = bars
-        self.__model_as_title = kwargs.get('title') is None
+        self.__model_as_title = title is None
 
     def __post_init__(self, content_size: Size):
         self.bars, self.lbar, self.rbar = calc_bars_sizes(content_size[1], self.bars)

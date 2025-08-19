@@ -1,18 +1,24 @@
+from typing import Any
+
 from octorest import OctoRest
 
 from pydashboard.containers import BaseModule
 
 
-class Octoprint(BaseModule):
-    def __init__(self, *, host, token, port=80, scheme='http', **kwargs):
+class OctoPrint(BaseModule):
+    def __init__(self, *, host: str, token: str, port: int = 80, scheme: str = 'http', **kwargs: Any):
         """
 
         Args:
-            host:
-            token:
-            port:
-            scheme:
+            host: OctoPrint server IP or FQDN
+            token: OctoPrint API token
+            port: OctoPrint server port
+            scheme: http or https
             **kwargs: See [BaseModule](../containers/basemodule.md)
+
+        !!! note
+            This widget ignores `subtitle`, `subtitle_align`, `subtitle_background`, `subtitle_color` and
+            `subtitle_style` because they are used internally to display status.
         """
         for k in ['subtitle', 'subtitle_align', 'subtitle_background', 'subtitle_color', 'subtitle_style']:
             if k in kwargs:
@@ -59,4 +65,4 @@ class Octoprint(BaseModule):
             self.styles.border_subtitle_color = 'red'
 
 
-widget = Octoprint
+widget = OctoPrint

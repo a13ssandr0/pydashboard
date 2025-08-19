@@ -18,8 +18,23 @@ _color_state = {
 
 class Docker(BaseModule):
     """
-    Args:
-        **kwargs: See [BaseModule](../containers/basemodule.md)
+    Docker module has no specific configuration parameters, see [BaseModule](../containers/basemodule.md).
+
+    !!! warning
+        This module needs the user to be in the `docker` group to get sufficient permissions to connect to docker.
+        If not present yet, the `docker` group has to be created.
+        ```bash
+        sudo addgroup docker
+        sudo adduser $(whoami) docker
+        ```
+
+        It's totally fine if the above command produce the following outputs:
+        ``` title="sudo addgroup docker"
+        fatal: The group `docker' already exists.
+        ```
+        ``` title="sudo adduser $(whoami) docker"
+        info: The user `alessandro' is already a member of `docker'.
+        ```
     """
 
     def __call__(self, size: Size):
@@ -68,9 +83,8 @@ class Docker(BaseModule):
         except FileNotFoundError:
             self.logger.error('Cannot connect to Docker')
             return "[yellow]Docker not installed[/yellow]"
-        except ConnectionError as e:
+        except (ConnectionError, PermissionError) as e:
             self.logger.error('Docker connection error: {}', e)
             return f"[red]{e}[/red]"
-
 
 widget = Docker
