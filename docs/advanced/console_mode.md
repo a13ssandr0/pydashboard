@@ -64,8 +64,8 @@ UtmpIdentifier=tty8
 UtmpMode=user
 
 ExecStartPre=/usr/bin/chvt 8
-ExecStartPre=-/usr/bin/dmesg -D
-ExecStart=/home/USER/.local/bin/pydashboard /home/USER/.config/pydashboard/config.yml
+ExecStartPre=+/usr/bin/dmesg -D
+ExecStart=/home/USER/.local/bin/pydashboard
 Restart=always
 RestartSec=3
 

@@ -32,7 +32,7 @@ class TableModule(BaseModule):
 
         """
         super().__init__(columns=columns, show_header=show_header, sizes=sizes, sort=sort, **kwargs)
-        self.columns = columns
+        self.columns = list(columns)
         if sizes is None:
             sizes = [0]
         self.sizes = sizes + [0] * (len(columns) - len(sizes))

@@ -117,7 +117,7 @@ def main():
     from loguru import logger
 
     parser = ArgumentParser()
-    parser.add_argument('config', type=Path, default=Path.home()/'.config/pydashboard/config.yml')
+    parser.add_argument('config', type=Path, default=Path.home()/'.config/pydashboard/config.yml', nargs='?')
     parser.add_argument('--log', type=Path, required=False)
     parser.add_argument('--debug', action=BooleanOptionalAction)
     args = parser.parse_args()
@@ -147,7 +147,7 @@ def main():
         logger.add(args.log, **debug_logger, format=log_format, rotation="weekly")
     else:
         try:
-            logger.add(Path.home()/'/.pydashboard/log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
+            logger.add(Path.home()/'.pydashboard/log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
         except:
             logger.add(args.config.parent / 'log/pydashboard.log', **debug_logger, format=log_format, rotation="weekly")
 
