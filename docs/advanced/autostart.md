@@ -76,10 +76,10 @@ WantedBy=multi-user.target
 
 Enable and start the service
 ```bash
-sudo systemctl enable pydasboard.service
-sudo systemctl start pydasboard.service
+sudo systemctl enable pydashboard.service
+sudo systemctl start pydashboard.service
 ```
 
-PyDashboard should start on the screen, if you notice some colors are wrong check [this fix](config_file.md/#color-scheme).
+PyDashboard should start on the screen, if you notice some colors are wrong check [this fix](../config_file.md/#color-scheme).
 
 ![PyDashboard on tty](../images/pydashboard_demo_tty.jpg)

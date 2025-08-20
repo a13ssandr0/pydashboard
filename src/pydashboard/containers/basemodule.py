@@ -85,7 +85,7 @@ class BaseModule(ScrollableContainer):
             remote_username: Remote host SSH username
             remote_password: Remote host SSH password
             remote_key: Remote host SSH key
-            ssh_strict_host_key_checking: Control host key verivification behaviour
+            ssh_strict_host_key_checking: Control host key verification behaviour
             ssh_ignore_known_hosts_file: Ignore known hosts file (suppresses host key changed warning)
         """
         id = sub(r"[^\w\d\-_]", "_", id)

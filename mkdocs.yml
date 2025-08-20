@@ -100,4 +100,4 @@ nav:
     - Styling: advanced/styling.md
     - Plugins: advanced/plugins.md
     - Remote connection: advanced/remote_connection.md
-    - Autostart on boot: advanced/console_mode.md
+    - Autostart on boot: advanced/autostart.md
