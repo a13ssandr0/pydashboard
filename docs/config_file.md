@@ -122,7 +122,7 @@ respectively, starting from the top left corner of the screen, the remaining spa
 ----------------------------------------
 ```
 As you can see the effective size of each widget is smaller than the specified size due to the
-border, this behaviour can be controlled by [setting the border](advanced/styling.md).
+border, this behaviour can be controlled by [setting the border](containers/basemodule.md#basemodule.BaseModule--border).
 
 Back to the example above, let's place the clock: inside the `mods:` section we define a `clock:`
 section with a `position:` section that requires 4 parameters:
@@ -259,7 +259,7 @@ Producing this result:
 
 
 ## Defaults and common settings
-When applying certain settings, for example [styles](advanced/styling.md), you may need apply the same settings to every widget
+When applying certain settings, for example [styles](containers/basemodule.md#basemodule.BaseModule--styling), you may need apply the same settings to every widget
 without having to repeat them many times across the file.
 
 In the `defaults:` section you can define default values for each parameter accepted by a widget, then, when 

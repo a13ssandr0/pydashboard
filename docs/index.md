@@ -6,7 +6,8 @@ hide:
 
 # PyDashboard
 
-PyDashboard is a modular, easily extensible (1) terminal dashboard entirely built in Python. 
+PyDashboard is a modular, easily extensible (1) terminal dashboard entirely built in Python using [Textual](https://textual.textualize.io),
+a framework built by [Textualize.io](https://www.textualize.io/).
 { .annotate }
 
 1. Feature coming in future releases.

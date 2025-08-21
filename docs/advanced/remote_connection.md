@@ -105,6 +105,24 @@ sudo systemctl start pydashboard-server.service
 On the client, in the configuration file, for each widget you want to get data from the server, add the parameter
 `#!yaml remote_host: pydashboard@<ip_addr>`.
 
+```yaml title="Full example
+mods:
+  resourceusage%pc2:
+    remote_host: 192.168.1.4
+    subtitle: PC2
+    position:
+      top: 5
+      left: 0
+      height: 3
+      width: 1
+    cpuCombined: true
+    showCPU: true
+    showMem: true
+    showSwp: false
+    showGPU: true
+    refreshInterval: 5
+```
+
 If you set up everything correctly and the service on the server has started,
 you should see the data coming from the server in the widget.
 
@@ -128,7 +146,7 @@ Although not recommended, PyDashboard can handle these cases for you by setting
   `ssh` may still display a warning if the host key changed and prohibit you from connecting, if this parameter
   is set to `true` UserKnownHostsFile will be set to `/dev/null`, meaning no file has to be checked for known hosts.
 
-!!! warning
+!!! danger
     The settings above could be a security risk if misused and should be avoided where possible.
 
 ### StrictHostKeyChecking

@@ -56,6 +56,7 @@ plugins:
             - src/pydashboard/containers
             - src/pydashboard/modules
           options:
+            docstring_section_style: spacy
             merge_init_into_class: true
             show_bases: false
             show_signature: false
@@ -97,7 +98,6 @@ nav:
       - TableModule: containers/tablemodule.md
   - Modules: modules/
   - Advanced:
-    - Styling: advanced/styling.md
     - Plugins: advanced/plugins.md
     - Remote connection: advanced/remote_connection.md
     - Autostart on boot: advanced/autostart.md

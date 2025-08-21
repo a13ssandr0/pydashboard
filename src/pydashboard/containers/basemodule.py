@@ -11,9 +11,11 @@ from durations import Duration
 from loguru import logger
 from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin, SSHCommsChannel2Error, SSHCommsError
 from rich.text import Text
+from textual.color import Color
 from textual.containers import ScrollableContainer
 from textual.css._style_properties import BorderProperty, ColorProperty, StyleFlagsProperty
 from textual.css.types import AlignHorizontal, AlignVertical
+from textual.style import Style
 from textual.widgets import Static
 
 from pydashboard.utils.ssh import SessionManager
@@ -37,49 +39,50 @@ class BaseModule(ScrollableContainer):
     def __init__(self, *,
                  id: str = None,
                  mod_type: str = None,
-                 refresh_interval: Literal['never'] | int | float | str = None,
-                 align_horizontal: AlignHorizontal = "left",
-                 align_vertical: AlignVertical = "top",
-                 color: ColorProperty = None,
-                 border: BorderProperty | tuple = ("round", "white"),
+                 refresh_interval: Literal['never'] | int | str | None = None,
+                 align_horizontal: Literal["left", "center", "right", "justify"] = "left",
+                 align_vertical: Literal["top", "middle", "bottom"] = "top",
+                 color: str = None,
+                 border: tuple[str] = ("round", "white"),
                  title: str = None,
-                 title_align: AlignHorizontal = "center",
-                 title_background: ColorProperty = None,
-                 title_color: ColorProperty = "white",
-                 title_style: StyleFlagsProperty = None,
+                 title_align: Literal["left", "center", "right"] = "center",
+                 title_background: str = None,
+                 title_color: str = "white",
+                 title_style: str = None,
                  subtitle: str = None,
-                 subtitle_align: AlignHorizontal = "right",
-                 subtitle_background: ColorProperty = None,
-                 subtitle_color: ColorProperty = "white",
-                 subtitle_style: StyleFlagsProperty = None,
+                 subtitle_align: Literal["left", "center", "right"] = "right",
+                 subtitle_background: str = None,
+                 subtitle_color: str = "white",
+                 subtitle_style: str = None,
                  remote_host: str = None,
                  remote_port: int = None,
                  remote_username: str = None,
                  remote_password: str = None,
                  remote_key: str = None,
-                 ssh_strict_host_key_checking: Literal[None, True, False, 'accept-new'] = None,
+                 ssh_strict_host_key_checking: Literal[True, False, 'accept-new'] | None = None,
                  # man ssh_config(5) - StrictHostKeyChecking
                  ssh_ignore_known_hosts_file: bool = False,
                  **kwargs: Any):
         """
 
         Args:
+            enabled: Enable/disable the widget <br><br> **TYPE:** `bool` <span class="doc-param-default"><b>DEFAULT: </b><code>True</code></span>
             refresh_interval: How often to update module data, accepts a value in seconds or string with a time unit.
-                                'never' disables updating
+                                `never`, `0`, `false`, `off`, `no`, `null` disable updating.
             align_horizontal: Horizontal alignment of the text
             align_vertical: Vertical alignment of the text
-            color: Color of the text
-            border: Border of the widget
+            color: [Color](#color) of the text
+            border: [Border](#border) of the widget
             title: Title of the widget
             title_align: Alignment of the title
             title_background: Background color of the title
-            title_color: Color of the title
-            title_style: Style of the title
-            subtitle: Title of the subwidget
+            title_color: [Color](#color) of the title
+            title_style: [Style](#style) of the title
+            subtitle: Subtitle of the widget
             subtitle_align: Alignment of the subtitle
             subtitle_background: Background color of the subtitle
-            subtitle_color: Color of the subtitle
-            subtitle_style: Style of the subtitle
+            subtitle_color: [Color](#color) of the subtitle
+            subtitle_style: [Style](#style) of the subtitle
             remote_host: Remote host IP or FQDN
             remote_port: Remote host SSH port
             remote_username: Remote host SSH username
@@ -87,6 +90,67 @@ class BaseModule(ScrollableContainer):
             remote_key: Remote host SSH key
             ssh_strict_host_key_checking: Control host key verification behaviour
             ssh_ignore_known_hosts_file: Ignore known hosts file (suppresses host key changed warning)
+
+        # Styling
+        All the styling parameters shown above directly control the behaviour of Textual framework, the information
+        below is taken from their [CSS reference](https://textual.textualize.io/css_types/).
+
+        ## Color
+        See: [Textual `<color>` Syntax](https://textual.textualize.io/css_types/color/#syntax)
+
+        A color should be in one of the following formats:
+
+         - a recognised [named color](https://textual.textualize.io/css_types/color/#named-colors) (e.g., `red`);
+         - a 3 or 6 hexadecimal digit number representing the [RGB values](https://textual.textualize.io/css_types/color/#hex-rgb-value) of the color (e.g., `#F35573`);
+         - a 4 or 8 hexadecimal digit number representing the [RGBA values](https://textual.textualize.io/css_types/color/#hex-rgba-value) of the color (e.g., `#F35573A0`);
+         - a color description in the RGB system, [with](https://textual.textualize.io/css_types/color/#rgba-description) or [without](https://textual.textualize.io/css_types/color/#rgb-description) opacity (e.g., `rgb(23, 78, 200)`);
+         - a color description in the HSL system, [with](https://textual.textualize.io/css_types/color/#hsla-description) or [without](https://textual.textualize.io/css_types/color/#hsl-description) opacity (e.g., `hsl(290, 70%, 80%)`);
+
+        ## Border
+        See: [Textual `<border>` Syntax](https://textual.textualize.io/css_types/border/#syntax)
+
+        Must be passed as a tuple `#!yaml border: [style, color]`
+
+        `style` can take any of the following values:
+
+        | Border type | Description                                              |
+        |-------------|----------------------------------------------------------|
+        | `ascii`     | A border with plus, hyphen, and vertical bar characters. |
+        | `blank`     | A blank border (reserves space for a border).            |
+        | `dashed`    | Dashed line border.                                      |
+        | `double`    | Double lined border.                                     |
+        | `heavy`     | Heavy border.                                            |
+        | `hidden`    | Alias for "none".                                        |
+        | `hkey`      | Horizontal key-line border.                              |
+        | `inner`     | Thick solid border.                                      |
+        | `none`      | Disabled border.                                         |
+        | `outer`     | Solid border with additional space around content.       |
+        | `panel`     | Solid border with thick top.                             |
+        | `round`     | Rounded corners.                                         |
+        | `solid`     | Solid border.                                            |
+        | `tall`      | Solid border with additional space top and bottom.       |
+        | `thick`     | Border style that is consistently thick across edges.    |
+        | `vkey`      | Vertical key-line border.                                |
+        | `wide`      | Solid border with additional space left and right.       |
+
+        ![All border types](../images/all_border_types.png)
+        ///caption
+        All border types (taken from [Textual border style reference](https://textual.textualize.io/styles/border/#all-border-types))
+        ///
+
+        ## Text style
+        See: [Textual `<text-style>` Syntax](https://textual.textualize.io/css_types/text_style/#syntax)
+
+        Can be the value `none` for plain text with no styling,
+        or any _space-separated_ combination of the following values:
+
+        | Value       | Description                                                     |
+        |-------------|-----------------------------------------------------------------|
+        | `bold`      | **Bold text.**                                                  |
+        | `italic`    | _Italic text._                                                  |
+        | `reverse`   | Reverse video text (foreground and background colors reversed). |
+        | `strike`    | <s>Strikethrough text.</s>                                      |
+        | `underline` | <u>Underline text.</u>                                          |
         """
         id = sub(r"[^\w\d\-_]", "_", id)
         if id[0].isdigit(): id = "_" + id
@@ -97,9 +161,11 @@ class BaseModule(ScrollableContainer):
         # noinspection PyTypeChecker
         self.on_ready = self.logger.catch()(self.on_ready)
 
-        if isinstance(refresh_interval, str) and refresh_interval != 'never':
-            refresh_interval = Duration(refresh_interval).to_seconds()
-        self.refresh_interval = refresh_interval
+        if not refresh_interval or refresh_interval == 'never':
+            refresh_interval = 0
+        elif isinstance(refresh_interval, str):
+            refresh_interval = Duration(refresh_interval).seconds
+        self.refresh_interval: int = round(refresh_interval)
         self.logger.info('Setting {} refresh interval to {} second(s)', id, refresh_interval)
 
         self.styles.align_horizontal = align_horizontal
@@ -120,7 +186,7 @@ class BaseModule(ScrollableContainer):
         self.styles.border_subtitle_style = subtitle_style
 
         self.__user_settings = {
-            'refresh_interval'                  : refresh_interval,
+            'refresh_interval'                 : refresh_interval,
             'styles.align_horizontal'          : align_horizontal,
             'styles.align_vertical'            : align_vertical,
             'styles.color'                     : color,
@@ -285,7 +351,7 @@ class BaseModule(ScrollableContainer):
                 self.reload_styles()
                 self.inject_dependencies(self.post_init_target, reference_func=self.__post_init__)
 
-                if self.refresh_interval == 'never':
+                if not self.refresh_interval:
                     self.update()
                     return
 
@@ -316,7 +382,7 @@ class BaseModule(ScrollableContainer):
             except Exception as e:
                 super().notify(traceback.format_exc(), severity='error')
                 self.logger.exception(str(e))
-                self.interruptibleWait(self.refresh_interval if self.refresh_interval != 'never' else 30, signal)
+                self.interruptibleWait(self.refresh_interval or 30, signal)
 
     def handle_remote_connection_exception(self, text, e, signal):
         self.styles.border = ("round", "red")
@@ -351,7 +417,7 @@ class ErrorModule(Static):
     """
 
     @wraps(Static.__init__)
-    def __init__(self, content="", markup=False,  **kwargs):
+    def __init__(self, content="", markup=False, **kwargs):
         super().__init__(content, markup=markup, **kwargs)
         logger.error(content)
 
