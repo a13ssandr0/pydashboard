@@ -3,7 +3,9 @@ requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project.urls]
-github = "https://github.com/a13ssandro/pydashboard"
+Homepage = "https://a13ssandr0.github.io/pydashboard/"
+GitHub = "https://github.com/a13ssandro/pydashboard"
+Issues = "https://github.com/a13ssandr0/pydashboard/issues"
 
 [project]
 name = "pydashboard"
