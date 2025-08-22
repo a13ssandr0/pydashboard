@@ -132,20 +132,16 @@ class Systemctl(BaseModule):
             l = len(u[1])
             if l > max_len:
                 max_len = l
+        max_w = content_size[1] - max_len - 1
 
-        sysctl_info = ""
+        sysctl_info = []
         seen_units = []
         for u in my_units:
             if u[0] not in seen_units:
-                sysctl_info += (
-                        u[0][: content_size[1] - max_len - 1].ljust(content_size[1] - max_len - 1)
-                        + " "
-                        + sysctl_states_map(u[1])
-                        + "\n"
-                )
+                sysctl_info.append(f"{u[0][:max_w].ljust(max_w)} {sysctl_states_map(u[1])}")
                 seen_units.append(u[0])
 
-        return sysctl_info
+        return '\n'.join(sysctl_info)
 
 
 widget = Systemctl
