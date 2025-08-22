@@ -58,16 +58,17 @@ class Jellyfin(BaseModule):
                                 '0:').split('.')[0]
                     users += f"{cur_time}/{tot_time}"
 
-                    users += " " + s['NowPlayingItem'].get('SeriesName')
+                    if 'SeriesName' in s['NowPlayingItem']:
+                        users += " " + s['NowPlayingItem']['SeriesName']
 
-                    season = s['NowPlayingItem'].get('ParentIndexNumber')
-                    episode = s['NowPlayingItem'].get('IndexNumber')
-                    if season is not None and episode is not None:
-                        users += f" S{season}:E{episode}"
-                    elif season is not None:
-                        users += f" S{season}"
-                    elif episode is not None:
-                        users += f" E{episode}"
+                        season = s['NowPlayingItem'].get('ParentIndexNumber')
+                        episode = s['NowPlayingItem'].get('IndexNumber')
+                        if season is not None and episode is not None:
+                            users += f" S{season}:E{episode}"
+                        elif season is not None:
+                            users += f" S{season}"
+                        elif episode is not None:
+                            users += f" E{episode}"
 
                     users += f" - {s['NowPlayingItem'].get('Name', '')}\n"  # title
 
