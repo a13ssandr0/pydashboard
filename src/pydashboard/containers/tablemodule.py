@@ -32,10 +32,12 @@ class TableModule(BaseModule):
 
         """
         super().__init__(columns=columns, show_header=show_header, sizes=sizes, sort=sort, **kwargs)
-        self.columns = list(columns)
+        if not columns and sizes:
+            raise ValueError("Parameter 'columns' cannot be empty when 'sizes' is not empty")
+        self.columns = list(columns) if columns else []
         if sizes is None:
-            sizes = [0]
-        self.sizes = sizes + [0] * (len(columns) - len(sizes))
+            sizes = []
+        self.sizes = sizes + [0] * (len(self.columns) - len(sizes))
         self.sortby = None
         self.reverse = None
 
@@ -70,6 +72,10 @@ class TableModule(BaseModule):
         result = self(*args, **kwargs)
         self.inner.clear()
         if result is not None and not result.empty:
+            if not self.columns:
+                self.columns = result.columns.to_list()
+                self.make_header()
+
             result = _mktable(df=result,
                               humanize=self.humanize,
                               justify=self.justify,
@@ -79,7 +85,7 @@ class TableModule(BaseModule):
                               select_columns=self.columns)
             self.inner.add_rows([interleave(r, '') for r in result])
 
-    def on_ready(self, signal):
+    def make_header(self):
         if self.inner.show_header:
             columns = [Text(self.column_names.get(col, col), justify=self.justify.get(col, "left")) for col in
                        self.columns]
@@ -97,6 +103,9 @@ class TableModule(BaseModule):
 
         for col, s in zip(columns, sizes):
             self.inner.add_column(col, width=s)
+
+    def on_ready(self, signal):
+        self.make_header()
         return super().on_ready(signal)
 
 

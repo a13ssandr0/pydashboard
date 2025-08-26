@@ -6,11 +6,8 @@ hide:
 
 # PyDashboard
 
-PyDashboard is a modular, easily extensible (1) terminal dashboard entirely built in Python using [Textual](https://textual.textualize.io),
+PyDashboard is a modular, easily extensible terminal dashboard entirely built in Python using [Textual](https://textual.textualize.io),
 a framework built by [Textualize.io](https://www.textualize.io/).
-{ .annotate }
-
-1. Feature coming in future releases.
 
 It's inspired to projects like [WTFutil](https://wtfutil.com) (from which borrows the configuration file structure) 
 but brings to the table new essential features like [user plugins](advanced/plugins.md) and [remote connections](advanced/remote_connection.md).

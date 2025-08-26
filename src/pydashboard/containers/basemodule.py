@@ -11,11 +11,7 @@ from durations import Duration
 from loguru import logger
 from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin, SSHCommsChannel2Error, SSHCommsError
 from rich.text import Text
-from textual.color import Color
 from textual.containers import ScrollableContainer
-from textual.css._style_properties import BorderProperty, ColorProperty, StyleFlagsProperty
-from textual.css.types import AlignHorizontal, AlignVertical
-from textual.style import Style
 from textual.widgets import Static
 
 from pydashboard.utils.ssh import SessionManager
@@ -77,12 +73,12 @@ class BaseModule(ScrollableContainer):
             title_align: Alignment of the title
             title_background: Background color of the title
             title_color: [Color](#color) of the title
-            title_style: [Style](#style) of the title
+            title_style: [Style](#text-style) of the title
             subtitle: Subtitle of the widget
             subtitle_align: Alignment of the subtitle
             subtitle_background: Background color of the subtitle
             subtitle_color: [Color](#color) of the subtitle
-            subtitle_style: [Style](#style) of the subtitle
+            subtitle_style: [Style](#text-style) of the subtitle
             remote_host: Remote host IP or FQDN
             remote_port: Remote host SSH port
             remote_username: Remote host SSH username

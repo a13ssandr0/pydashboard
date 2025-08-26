@@ -75,7 +75,7 @@ class MainApp(App):
                                widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
-            except ImportError as e:
+            except (ImportError, ValueError) as e:
                 widget = ErrorModule(str(e))
             except AttributeError as e:
                 widget = ErrorModule(f"Attribute '{e.name}' not found in module {mod}")

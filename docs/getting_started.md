@@ -3,7 +3,7 @@
     is not guaranteed to work on Windows nor macOS due to some modules being
     heavily dependent on Linux specific programs/commands.
 
-If not already present, install pipx following the [official guide](https://github.com/pypa/pipx?tab=readme-ov-file#install-pipx).
+If not already present, install pipx following the [official guide](https://pipx.pypa.io/stable/installation/#on-linux).
 To install pipx on Ubuntu 23.04 or above run:
 ```bash
 sudo apt update
