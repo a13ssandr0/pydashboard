@@ -105,7 +105,7 @@ sudo systemctl start pydashboard-server.service
 On the client, in the configuration file, for each widget you want to get data from the server, add the parameter
 `#!yaml remote_host: pydashboard@<ip_addr>`.
 
-```yaml title="Full example
+```yaml title="Full example"
 mods:
   resourceusage%pc2:
     remote_host: 192.168.1.4
