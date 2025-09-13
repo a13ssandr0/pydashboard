@@ -1,29 +1,34 @@
+import os
 from math import ceil, floor
 from typing import Any, Literal
 
-try:
-    # noinspection PyUnresolvedReferences
-    from libvirt import VIR_CONNECT_LIST_DOMAINS_ACTIVE, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_CRASHED, \
-        VIR_DOMAIN_NOSTATE, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED, VIR_DOMAIN_RUNNING, VIR_DOMAIN_SHUTDOWN, \
-        VIR_DOMAIN_SHUTOFF, openReadOnly, virDomain
-except ImportError:
-    raise ImportError("libvirt module is not available: you need to install 'pydashboard[libvirt]' to use this module.")
+if '__PYD_SKIP_OPTIONAL_IMPORTS__' not in os.environ:
+    try:
+        # noinspection PyUnresolvedReferences
+        from libvirt import VIR_CONNECT_LIST_DOMAINS_ACTIVE, VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_CRASHED, \
+            VIR_DOMAIN_NOSTATE, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED, VIR_DOMAIN_RUNNING, VIR_DOMAIN_SHUTDOWN, \
+            VIR_DOMAIN_SHUTOFF, openReadOnly, virDomain
+
+        _state_map = {
+            VIR_DOMAIN_NOSTATE    : "nostate",
+            VIR_DOMAIN_RUNNING    : "running",
+            VIR_DOMAIN_BLOCKED    : "blocked",
+            VIR_DOMAIN_PAUSED     : "paused",
+            VIR_DOMAIN_SHUTDOWN   : "shutdown",
+            VIR_DOMAIN_SHUTOFF    : "shutoff",
+            VIR_DOMAIN_CRASHED    : "crashed",
+            VIR_DOMAIN_PMSUSPENDED: "pmsuspended",
+        }
+    except ImportError:
+        raise ImportError("libvirt module is not available: you need to install 'pydashboard[libvirt]' to use this module.")
+else:
+    _state_map = {}
 
 from pydashboard.containers import BaseModule
 from pydashboard.utils.bars import create_bar
 from pydashboard.utils.types import Size
 from pydashboard.utils.units import perc_fmt, sizeof_fmt
 
-_state_map = {
-    VIR_DOMAIN_NOSTATE    : "nostate",
-    VIR_DOMAIN_RUNNING    : "running",
-    VIR_DOMAIN_BLOCKED    : "blocked",
-    VIR_DOMAIN_PAUSED     : "paused",
-    VIR_DOMAIN_SHUTDOWN   : "shutdown",
-    VIR_DOMAIN_SHUTOFF    : "shutoff",
-    VIR_DOMAIN_CRASHED    : "crashed",
-    VIR_DOMAIN_PMSUSPENDED: "pmsuspended",
-}
 _color_state_map = {
     "nostate"    : f"nostate",
     "running"    : f"[green]running[/green]",
@@ -82,14 +87,14 @@ class Libvirt(BaseModule):
         elif resource_usage == 'tworow':
             self.resource_rows = 2
 
-        if self.resource_rows > 0:
+    def __post_init__(self, content_size: Size):
+        if self.resource_rows != 0:
             with openReadOnly(self.hypervisor_uri) as conn:
                 self.times = {
                     dom.name(): self.dom_cpu_dict(dom)
                     for dom in conn.listAllDomains(VIR_CONNECT_LIST_DOMAINS_ACTIVE)
                 }
 
-    def __post_init__(self, content_size: Size):
         if self.resource_rows < 0:
             if content_size[1] < 22:
                 self.resource_rows = 2
@@ -97,7 +102,7 @@ class Libvirt(BaseModule):
                 self.resource_rows = 1
 
     @staticmethod
-    def dom_cpu_dict(dom: virDomain):
+    def dom_cpu_dict(dom: 'virDomain'):
         return {
             'cpu_time': int(dom.getCPUStats(True)[0]['cpu_time']),
             'vcpus'   : dom.vcpusFlags(VIR_DOMAIN_AFFECT_LIVE)

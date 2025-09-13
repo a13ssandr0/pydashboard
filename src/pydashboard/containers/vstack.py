@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict
 from importlib import import_module
 from typing import Any
@@ -56,9 +57,20 @@ class Vstack(BaseModule):
             full_w_id = self.id + '-' + w_id
 
             try:
+                #a VERY UGLY hack to allow importing libvirt module without loading its library if running through
+                # remote connection
+                # 0. just to be sure no one is messing with environment variabled, remove the variable that skips the import phase
+                os.environ.pop('__PYD_SKIP_OPTIONAL_IMPORTS__', None)
+                # 1. if running through remote connection allow skipping imports
+                if 'remote_host' in conf:
+                    os.environ['__PYD_SKIP_OPTIONAL_IMPORTS__'] = 'true'
+                # 2. do the import as always
                 m = import_module('pydashboard.modules.' + mod)
                 widget: BaseModule | ErrorModule = m.widget(id=full_w_id, defaults=defaults | conf.pop('defaults', {}),
-                                                            mod_type=mod, **conf)
+                                                        mod_type=mod, **conf)
+                # 3. clear the variable
+                os.environ.pop('__PYD_SKIP_OPTIONAL_IMPORTS__', None)
+                self.logger.success('Loaded widget {} - {} ({})', w_id, widget.id, mod)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
             except ImportError as e:

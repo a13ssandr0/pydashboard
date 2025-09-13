@@ -65,9 +65,11 @@ rm client_id.pub
 For installation refer to [Getting started](../getting_started.md). 
 
 !!! note
-    If at least one of the servers will be using the module libvirt, remember to 
+    ~~If at least one of the servers will be using the module libvirt, remember to 
     [install `pydashboard[libvirt]`](../getting_started.md/#libvirt)
-    on both che client and the server needing that module, other servers are not affected.
+    on both che client and the server needing that module, other servers are not affected.~~
+    Starting from version 1.2.0 you don't need anymore to install libvirt library on the client if you only plan to
+    run the module on the servers.
 
 
 ### 3. Systemd unit

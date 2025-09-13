@@ -24,7 +24,7 @@ if not __package__:
     package_source_path = os.path.dirname(os.path.dirname(__file__))
     sys.path.insert(0, package_source_path)
 
-from .containers import ErrorModule, GenericModule as Module
+from .containers import BaseModule, ErrorModule, GenericModule as Module
 from .utils.ssh import SessionManager
 from .utils.types import Coordinates
 
@@ -69,16 +69,26 @@ class MainApp(App):
                                  conf['window'].get('x', 0))
 
             try:
+                #a VERY UGLY hack to allow importing libvirt module without loading its library if running through
+                # remote connection
+                # 0. just to be sure no one is messing with environment variabled, remove the variable that skips the import phase
+                os.environ.pop('__PYD_SKIP_OPTIONAL_IMPORTS__', None)
+                # 1. if running through remote connection allow skipping imports
+                if 'remote_host' in conf:
+                    os.environ['__PYD_SKIP_OPTIONAL_IMPORTS__'] = 'true'
+                # 2. do the import as always
                 m = import_module('pydashboard.modules.' + mod)
                 widget: Module = m.widget(id=w_id, defaults=defaults | conf.pop('defaults', {}), mod_type=mod, **conf)
+                # 3. clear the variable
+                os.environ.pop('__PYD_SKIP_OPTIONAL_IMPORTS__', None)
                 logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id,
                                widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
                 widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
-            except (ImportError, ValueError) as e:
-                widget = ErrorModule(str(e))
             except AttributeError as e:
                 widget = ErrorModule(f"Attribute '{e.name}' not found in module {mod}")
+            except Exception as e:
+                widget = ErrorModule(str(e))
 
             widget.styles.offset = (coords.x, coords.y)
             widget.styles.width = coords.w
