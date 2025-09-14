@@ -1,5 +1,6 @@
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, cast
 
+import rpyc.utils.classic
 from pandas import DataFrame
 from rich.text import Text
 from textual.widgets import DataTable
@@ -69,7 +70,10 @@ class TableModule(BaseModule):
         pass
 
     def update(self, *args, **kwargs):
-        result = self(*args, **kwargs)
+        result = cast(DataFrame, self.call_target(*args, **kwargs))
+        if self.remote_host:
+            # if running over a remote connection copy the dataframe locally
+            result = rpyc.utils.classic.obtain(result)
         self.inner.clear()
         if result is not None and not result.empty:
             if not self.columns:

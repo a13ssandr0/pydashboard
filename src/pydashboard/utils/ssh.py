@@ -6,6 +6,7 @@ from loguru import logger
 from plumbum import SshMachine
 from plumbum.machines.ssh_machine import SshTunnel
 from rpyc import Connection
+rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 
 class SessionManager:
@@ -48,7 +49,7 @@ class SessionManager:
     def create_session(cls, conn_id, module_name, setter_function=None):
         sess_id = f'{conn_id};{module_name}'
         if sess_id not in cls.active_sessions:
-            cls.active_sessions[sess_id] = rpyc.connect('127.0.0.1', cls.active_tunnels[conn_id].lport)
+            cls.active_sessions[sess_id] = rpyc.connect('127.0.0.1', cls.active_tunnels[conn_id].lport, config=rpyc.core.protocol.DEFAULT_CONFIG)
             cls.logger.debug("Opened connection to {}", cls.active_sessions[sess_id])
             cls.active_sessions[sess_id].root.import_module(module_name, setter_function)
 

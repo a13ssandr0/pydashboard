@@ -3,6 +3,8 @@ from importlib import import_module
 import rpyc
 from loguru import logger
 from rpyc import ThreadedServer
+rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
+
 
 # noinspection PyUnboundLocalVariable
 if not __package__:
@@ -35,7 +37,7 @@ class PyDashboardServer(rpyc.Service):
 
 
 def main():
-    server = ThreadedServer(PyDashboardServer, port=60001)
+    server = ThreadedServer(PyDashboardServer, port=60001, protocol_config=rpyc.core.protocol.DEFAULT_CONFIG)
     logger.info('Starting PyDashboardServer on port 60001')
     server.start()
 
