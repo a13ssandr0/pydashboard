@@ -24,7 +24,7 @@ If you want to use the [libvirt module](modules/libvirt.md) you have to install
 
 On Ubuntu you can run:
 ```bash
-sudo apt install libvirt-dev
+sudo apt install libvirt-dev gcc python3-dev
 pipx install pydashboard[libvirt]
 ```
 

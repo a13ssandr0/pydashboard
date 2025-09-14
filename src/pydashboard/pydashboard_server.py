@@ -19,7 +19,7 @@ class PyDashboardServer(rpyc.Service):
     widget = None
 
     def exposed_import_module(self, module_name, setter_function):
-        self.module = import_module('modules.' + module_name)
+        self.module = import_module('pydashboard.modules.' + module_name)
         self.setter_function = setter_function
 
     def exposed_init_module(self, **kwargs):

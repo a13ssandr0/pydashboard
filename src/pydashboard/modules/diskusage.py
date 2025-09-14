@@ -58,8 +58,8 @@ class DiskUsage(TableModule):
         """
         self.exclude = exclude
         self.humanize = _human if human_readable else None
-        super().__init__(columns=columns, show_header=True, exclude=exclude, human_readable=human_readable,
-                         sort=sort, **kwargs)
+        super().__init__(columns=columns, show_header=kwargs.pop('show_header', True), exclude=exclude,
+                         human_readable=human_readable, sort=sort, **kwargs)
 
     def __call__(self):
         partitions = [{**part._asdict(), **psutil.disk_usage(part.mountpoint)._asdict()} for part in

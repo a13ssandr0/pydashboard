@@ -39,6 +39,16 @@ The following commands will present a title to tell if they have to be run on th
 scp $(ls -dt "${HOME}"/.ssh/id*.pub 2>/dev/null | grep -v -- '-cert.pub$' | head -n 1) USER@server:client_id.pub
 ```
 
+!!! note
+    If the command above returns
+    ```
+    usage: scp [-346ABCOpqRrsTv] [-c cipher] [-D sftp_server_path] [-F ssh_config]
+               [-i identity_file] [-J destination] [-l limit] [-o ssh_option]
+               [-P port] [-S program] [-X sftp_option] source ... target
+    ```
+    this means that your user has not a key file and you have to create one. 
+    To do it just run `ssh-keygen` accepting the default settings.
+
 ```bash title="server"
 # create a user specifically for pydashboard 
 sudo useradd --create-home --shell /bin/bash pydashboard
@@ -88,8 +98,9 @@ Description=PyDashboard server
 After=multi-user.target 
 
 [Service]
+Environment="PYTHONUNBUFFERED=1"
 User=pydashboard
-ExecStart=/home/pydashboard/.local/bin/pydashboard
+ExecStart=/home/pydashboard/.local/bin/pydashboard-server
 Restart=always
 RestartSec=3
 

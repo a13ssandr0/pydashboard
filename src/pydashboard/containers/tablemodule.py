@@ -1,4 +1,4 @@
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, Optional
 
 from pandas import DataFrame
 from rich.text import Text
@@ -37,7 +37,7 @@ class TableModule(BaseModule):
         self.columns = list(columns) if columns else []
         if sizes is None:
             sizes = []
-        self.sizes = sizes + [0] * (len(self.columns) - len(sizes))
+        self.sizes = list(sizes) + [0] * (len(self.columns) - len(sizes))
         self.sortby = None
         self.reverse = None
 
@@ -64,7 +64,7 @@ class TableModule(BaseModule):
         self.inner.cell_padding = 0
         self.inner.zebra_stripes = True
 
-    def __call__(self, *args, **kwargs) -> 'DataFrame|None':
+    def __call__(self, *args, **kwargs) -> 'Optional[DataFrame]':
         """Method called each time the module has to be updated"""
         pass
 
