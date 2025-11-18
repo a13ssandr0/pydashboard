@@ -133,6 +133,8 @@ class Libvirt(BaseModule):
 
         libvirt_info = ""
         for name, state in states:
+            if libvirt_info:
+                libvirt_info += "\n"
             libvirt_info += (
                     name[: content_size[1] - max_len - 1].ljust(content_size[1] - max_len - 1)
                     + " "
@@ -154,13 +156,14 @@ class Libvirt(BaseModule):
 
                 self.times = new_times
 
-                mem = memory.get(name, {'available': 1, 'unused': 1})
+                mem = memory.get(name, {})
                 # if the domain is powered off this will be (1-1/1)*100=0
-                ram = (1 - mem['unused'] / mem['available']) * 100
+                unused, available = mem.get('unused', 1), mem.get('available', 1)
+                ram = (1 - unused / available) * 100
 
                 if name in memory:
-                    used = sizeof_fmt((mem['available'] - mem['unused']) * 1000.0, div=1000.0)
-                    total = sizeof_fmt(mem['available'] * 1000.0, div=1000.0)
+                    used = sizeof_fmt((available - unused) * 1000.0, div=1000.0)
+                    total = sizeof_fmt(available * 1000.0, div=1000.0)
                     ram_txt = f"{used}/{total}"
                 else:
                     ram_txt = '0B'
