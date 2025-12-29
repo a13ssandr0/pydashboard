@@ -1,6 +1,6 @@
 .venv
 __pycache__
-config.yml
+config*.yml
 _tests
 log/
 dist/
