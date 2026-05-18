@@ -8,7 +8,7 @@ from time import sleep
 from typing import Any, Literal
 
 from durations import Duration
-from loguru import logger
+from loguru import _logger
 from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin, SSHCommsChannel2Error, SSHCommsError
 from rich.text import Text
 from textual.containers import ScrollableContainer
@@ -33,6 +33,7 @@ class BaseModule(ScrollableContainer):
     remote_settings = None
 
     def __init__(self, *,
+                 logger: '_logger.Logger',
                  id: str = None,
                  mod_type: str = None,
                  refresh_interval: Literal['never'] | int | str | None = None,
@@ -412,10 +413,10 @@ class ErrorModule(Static):
         }
     """
 
-    @wraps(Static.__init__)
-    def __init__(self, content="", markup=False, **kwargs):
+    # @wraps(Static.__init__)
+    def __init__(self, logger: '_logger.Logger', content="", markup=False, **kwargs):
         super().__init__(content, markup=markup, **kwargs)
-        logger.error(content)
+        logger.exception(content)
 
     def compose(self):
         self.border_title = "Module error"

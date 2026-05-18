@@ -52,9 +52,9 @@ class Docker(BaseModule):
                     max_len = l
             ctr_info.sort(key=lambda x: x["Names"])
 
-            cont_spc = sizeof_fmt(sum([c.get("SizeRw", 0) for c in sys_df['Containers']]), div=1000.0)
-            imgs_spc = sizeof_fmt(sum([c.get("Size", 0) for c in sys_df['Images']]), div=1000.0)
-            vols_spc = sizeof_fmt(sum([c.get("UsageData", {}).get("Size", 0) for c in sys_df['Volumes']]), div=1000.0)
+            cont_spc = sizeof_fmt()(sum([c.get("SizeRw", 0) for c in sys_df['Containers']]), div=1000.0)
+            imgs_spc = sizeof_fmt()(sum([c.get("Size", 0) for c in sys_df['Images']]), div=1000.0)
+            vols_spc = sizeof_fmt()(sum([c.get("UsageData", {}).get("Size", 0) for c in sys_df['Volumes']]), div=1000.0)
 
             return (
                 """Containers: {cont:>3}   Running: [green]{runn:>3}[/green]\n"""

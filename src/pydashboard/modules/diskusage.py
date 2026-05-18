@@ -29,14 +29,10 @@ _justify = {
 }
 
 _human = {
-    # 'device':     noop,
-    # 'fstype':     noop,
-    'total'  : sizeof_fmt,
-    'used'   : sizeof_fmt,
-    'free'   : sizeof_fmt,
-    'percent': perc_fmt,
-    # 'mountpoint': noop,
-    # 'opts':       noop,
+    'total'  : sizeof_fmt(),
+    'used'   : sizeof_fmt(),
+    'free'   : sizeof_fmt(),
+    'percent': perc_fmt(),
 }
 
 
@@ -65,10 +61,7 @@ class DiskUsage(TableModule):
         partitions = [{**part._asdict(), **psutil.disk_usage(part.mountpoint)._asdict()} for part in
                       psutil.disk_partitions() if not self.exclude or part.fstype not in self.exclude]
 
-        table = DataFrame.from_records(partitions)
-        table['percent'] /= 100
-
-        return table
+        return DataFrame.from_records(partitions)
 
 
 widget = DiskUsage

@@ -25,7 +25,9 @@ class PyDashboardServer(rpyc.Service):
         self.setter_function = setter_function
 
     def exposed_init_module(self, **kwargs):
-        self.widget = self.module.widget(**kwargs)
+        #just in case
+        kwargs.pop('logger', None)
+        self.widget = self.module.widget(logger=logger, **kwargs)
         self.widget.set = self.setter_function
         return self.widget.id
 

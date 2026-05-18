@@ -66,17 +66,18 @@ class Vstack(BaseModule):
                     os.environ['__PYD_SKIP_OPTIONAL_IMPORTS__'] = 'true'
                 # 2. do the import as always
                 m = import_module('pydashboard.modules.' + mod)
-                widget: BaseModule | ErrorModule = m.widget(id=full_w_id, defaults=defaults | conf.pop('defaults', {}),
-                                                        mod_type=mod, **conf)
+                widget: BaseModule | ErrorModule = m.widget(logger=self.logger, id=full_w_id,
+                                                            defaults=defaults | conf.pop('defaults', {}),
+                                                            mod_type=mod, **conf)
                 # 3. clear the variable
                 os.environ.pop('__PYD_SKIP_OPTIONAL_IMPORTS__', None)
                 self.logger.success('Loaded widget {} - {} ({})', w_id, widget.id, mod)
             except ModuleNotFoundError as e:
-                widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
+                widget = ErrorModule(self.logger, f"Module '{mod}' not found\n{e.msg}")
             except ImportError as e:
-                widget = ErrorModule(str(e))
+                widget = ErrorModule(self.logger, str(e))
             except AttributeError as e:
-                widget = ErrorModule(f"Attribute '{e.name}' not found in module {mod}")
+                widget = ErrorModule(self.logger, f"Attribute '{e.name}' not found in module {mod}")
 
             widget.styles.width = "100%"
             widget.styles.height = "auto"

@@ -8,25 +8,30 @@ class Clock(BaseModule):
 
     # noinspection PyShadowingBuiltins
     def __init__(self, *, font: Literal['digitalFont', 'bigFont', 'boldFont'] = 'bigFont', format: str = None,
-                 compact: bool = False, show_seconds: bool = False, **kwargs: Any):
+                 compact: bool = False, show_seconds: bool = False, blink: bool = None, **kwargs: Any):
         """
         Args:
             font:
             format: Format the clock string displayed under the main clock
             compact: Remove spaces from between numbers
             show_seconds: Show seconds in main clock
+            blink: Enable/Disable blinking colon
             **kwargs: See [BaseModule](../containers/basemodule.md)
         """
-        super().__init__(font=font, format=format, compact=compact, show_seconds=show_seconds, **kwargs)
+        super().__init__(font=font, format=format, compact=compact, show_seconds=show_seconds, blink=blink, **kwargs)
         self.font = fonts.get(font, fonts['bigFont'])
         self.format = format
         self.compact = compact
         self.bf1 = "%H:%M:%S" if show_seconds else "%H:%M"
         self.bf2 = "%H %M %S" if show_seconds else "%H %M"
+        if blink is None:
+            self.blink=self.refresh_interval<=1
+        else:
+            self.blink=blink
 
     def __call__(self):
         now = datetime.now()
-        time_str = join_font(self.font, now.strftime(self.bf1 if now.second % 2 else self.bf2), self.compact)
+        time_str = join_font(self.font, now.strftime(self.bf1 if not self.blink or now.second % 2 else self.bf2), self.compact)
         if self.format:
             time_str += now.strftime(self.format)
         return time_str

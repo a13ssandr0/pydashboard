@@ -1,7 +1,10 @@
+import json
+from json import JSONDecodeError
 from typing import Any
 
+import requests
+from benedict import benedict
 from octorest import OctoRest
-from requests.packages import target
 
 from pydashboard.containers import BaseModule
 from pydashboard.utils.units import duration_fmt
@@ -33,52 +36,79 @@ class OctoPrint(BaseModule):
         self.url = f'{scheme}://{host}:{port}'
         self.styles.border_subtitle_align = 'left'
 
+        def _check_response(_, response: 'requests.Response'):
+            """
+            Make sure the response status code was 20x, raise otherwise
+            """
+            if not (200 <= response.status_code < 210):
+                error = response.text
+                msg = (f'Reply for {response.url} was not OK: {response.status_code} {response.reason}\n'
+                       '-----\n'
+                       f'{error}')
+                raise RuntimeError(msg)
+            return response
+
+        # patch `_check_response` method to change exception formatting
+        OctoRest._check_response = _check_response
+
     def __call__(self):
+        out = ''
         try:
-            out = ''
             client = OctoRest(url=self.url, apikey=self.token)
-            job_info = client.job_info()
-            out += f"State: {job_info['state']}\n"
-            out += f"File: {job_info['job']['file']['name']}\n"
-            if (completion:=job_info.get('progress', {}).get('completion')) is not None:
+            job_info = benedict(client.job_info(), keyattr_dynamic=True)
+            conn_info = benedict(client.connection_info(), keyattr_dynamic=True)
+            printer = benedict(client.printer() if conn_info.current.port else {}, keyattr_dynamic=True)
+
+            out = f"State: {job_info.state}\n"
+            if (filename := job_info.job.file.name) is not None:
+                out += f"File: {filename}\n"
+            if (completion := job_info.progress.completion) is not None:
                 out += f'Progress: {completion:.3f}%' + '\n'
-            if (printTime:=job_info.get('progress', {}).get('printTime')) is not None:
+            if (printTime := job_info.progress.printTime) is not None:
                 out += f'Print time: {duration_fmt(printTime)}s' + '\n'
-            if (printTimeLeft:=job_info.get('progress', {}).get('printTimeLeft')) is not None:
+            if (printTimeLeft := job_info.progress.printTimeLeft) is not None:
                 out += f'Time left: {duration_fmt(printTimeLeft)}s' + '\n'
 
-            conn_info = client.connection_info()
-            b_sub = conn_info.get('current', {}).get('state', 'N/A')
-            self.border_subtitle = b_sub
-            self.styles.border_subtitle_color = 'green' if b_sub != 'N/A' else 'red'
-            if conn_info.get('current', {}).get('port') is not None:
-                printer = client.printer()
-                temperatures = printer.get('temperature', {})
-                if temperatures:
-                    max_len = max([len(x) for x in temperatures.keys()])
-                    out += 'Temperatures:' + '\n'
-                    for tool, temp in temperatures.items():
-                        if not temp.get('actual') and not temp.get('offset') and not temp.get('target'):
-                            #Exclude empty sensors
-                            continue
-                        out += ' ' + tool.ljust(max_len) + ' '
-                        if (actual:=temp.get('actual')) is not None:
-                            out += f"{actual:.1f}°C"
-                        else:
-                            out += 'N/A'
-                        if (target:=temp.get('target')) is not None:
-                            if target:
-                                out += f"/{target:.1f}°C\n"
-                            else:
-                                out += '/off\n'
-                        else:
-                            out += '/N/A\n'
+            conn_state = conn_info.current.state
+            self.border_subtitle = conn_state
+            self.styles.border_subtitle_color = 'green' if conn_state != 'Closed' and 'error' not in conn_state.lower() else 'red'
 
-            return out
+            if conn_info.current.port is not None and (temperatures := printer.temperature):
+                max_len = max([len(x) for x in temperatures.keys()])
+                out += 'Temperatures:' + '\n'
+                for tool, temp in temperatures.items():
+                    if not temp.actual and not temp.offset and not temp.target:
+                        # Exclude empty sensors
+                        continue
+                    out += ' ' + tool.ljust(max_len) + ' '
+                    if (actual := temp.actual) is not None:
+                        out += f"{actual:.1f}°C"
+                    else:
+                        out += 'N/A'
+                    if (target := temp.target) is not None:
+                        if target:
+                            out += f"/{target:.1f}°C\n"
+                        else:
+                            out += '/off\n'
+                    else:
+                        out += '/N/A\n'
+
+        except RuntimeError as e:
+            try:
+                error = e.args[0].split('-----', maxsplit=1)[1]
+                error = json.loads(error)
+                error = error['error']
+            except (IndexError, JSONDecodeError, KeyError):
+                error = e.args[0].splitlines()[0].split(':')[1].strip()
+
+            self.border_subtitle = error
+            self.styles.border_subtitle_color = 'red'
 
         except OSError:
             self.border_subtitle = 'Offline'
             self.styles.border_subtitle_color = 'red'
+
+        return out
 
 
 widget = OctoPrint

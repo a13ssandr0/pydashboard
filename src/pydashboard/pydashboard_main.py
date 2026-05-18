@@ -2,6 +2,7 @@ import os
 import re
 import sys
 from argparse import ArgumentParser, BooleanOptionalAction
+from functools import wraps
 from importlib import import_module
 from pathlib import Path
 from threading import Event, Thread
@@ -10,12 +11,14 @@ from typing import Any, Type, cast
 from benedict import benedict
 from benedict.core import rename
 from benedict.utils import type_util
-from loguru import logger
+from loguru import _logger
 from textual._path import CSSPathType
 from textual.app import App
 from textual.binding import Binding
 from textual.driver import Driver
 from watchfiles import watch
+
+from pydashboard.default_config import make_def_conf
 
 # noinspection PyUnboundLocalVariable
 if not __package__:
@@ -24,7 +27,7 @@ if not __package__:
     package_source_path = os.path.dirname(os.path.dirname(__file__))
     sys.path.insert(0, package_source_path)
 
-from .containers import BaseModule, ErrorModule, GenericModule as Module
+from .containers import ErrorModule, GenericModule as Module
 from .utils.ssh import SessionManager
 from .utils.types import Coordinates
 
@@ -37,13 +40,14 @@ class MainApp(App):
     ready_hooks = {}
     modules_threads = []
 
-    def __init__(self, config: dict, driver_class: Type[Driver] | None = None, css_path: CSSPathType | None = None,
-                 watch_css: bool = False, ansi_color: bool = False):
+    def __init__(self, config: dict, logger: '_logger.Logger', driver_class: Type[Driver] | None = None,
+                 css_path: CSSPathType | None = None, watch_css: bool = False, ansi_color: bool = False):
         self.config = config
+        self.logger = logger
         super().__init__(driver_class, css_path, watch_css, ansi_color)
 
     def compose(self):
-        defaults = cast(dict[str, Any], self.config.get('defaults', {}))
+        defaults = self.config.get('defaults', {})
 
         for w_id, conf in cast(dict[str, dict[str, Any]], self.config['mods']).items():
             if conf is None: conf = {}
@@ -78,17 +82,18 @@ class MainApp(App):
                     os.environ['__PYD_SKIP_OPTIONAL_IMPORTS__'] = 'true'
                 # 2. do the import as always
                 m = import_module('pydashboard.modules.' + mod)
-                widget: Module = m.widget(id=w_id, defaults=defaults | conf.pop('defaults', {}), mod_type=mod, **conf)
+                widget: Module = m.widget(logger=self.logger, id=w_id, defaults=defaults | conf.pop('defaults', {}),
+                                          mod_type=mod, **conf)
                 # 3. clear the variable
                 os.environ.pop('__PYD_SKIP_OPTIONAL_IMPORTS__', None)
-                logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]', w_id,
-                               widget.id, mod, coords=coords)
+                self.logger.success('Loaded widget {} - {} ({}) [x={coords.x},y={coords.y},w={coords.w},h={coords.h}]',
+                                    w_id, widget.id, mod, coords=coords)
             except ModuleNotFoundError as e:
-                widget = ErrorModule(f"Module '{mod}' not found\n{e.msg}")
+                widget = ErrorModule(self.logger, f"Module '{mod}' not found\n{e.msg}")
             except AttributeError as e:
-                widget = ErrorModule(f"Attribute '{e.name}' not found in module {mod}")
+                widget = ErrorModule(self.logger, f"Attribute '{e.name}' not found in module {mod}")
             except Exception as e:
-                widget = ErrorModule(str(e))
+                widget = ErrorModule(self.logger, str(e))
 
             widget.styles.offset = (coords.x, coords.y)
             widget.styles.width = coords.w
@@ -109,22 +114,30 @@ class MainApp(App):
     def on_ready(self):
         self.signal.clear()
         for key, hook in self.ready_hooks.items():
-            t = Thread(target=hook, args=(self.signal,), name=key)
+            t = Thread(target=self.logger.catch(hook), args=(self.signal,), name=key)
             self.modules_threads.append(t)
             t.start()
         self.ready_hooks.clear()
 
     def on_exit_app(self):
-        logger.info('Stopping module threads')
+        self.logger.info('Stopping module threads')
         self.signal.set()
         while self.modules_threads:
             self.modules_threads.pop().join()
-        logger.info('Terminating remote connections')
+        self.logger.info('Terminating remote connections')
         SessionManager.close_all()
+
+    def _handle_exception(self, error: Exception) -> None:
+        self.logger.opt(exception=error).critical("An exception escaped to main thread!\n" + str(error))
+        super()._handle_exception(error)
 
 
 def main():
     from loguru import logger
+
+    logger.info("Starting PyDashboard")
+    logger.debug("sys.executable: {}", sys.executable)
+    logger.debug("sys.argv: {}", sys.argv)
 
     parser = ArgumentParser()
     parser.add_argument('config', type=Path, default=Path.home()/'.config/pydashboard/config.yml', nargs='?')
@@ -133,11 +146,20 @@ def main():
     args = parser.parse_args()
 
     pattern = re.compile(r"((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))")
-    def _standardize_item(d, key, value):
+    def _standardize_item(d, key, _):
         if type_util.is_string(key):
             # https://stackoverflow.com/a/12867228/2096218
             norm_key = pattern.sub(r"_\1", key).lower()
             rename(d, key, norm_key)
+
+    if not args.config.is_file():
+        if args.config.exists():
+            logger.critical("{} is not a file, cannot continue", args.config)
+            sys.exit(1)
+
+        logger.info("Config file {} does not exist, creating", args.config)
+        args.config.parent.mkdir(parents=True, exist_ok=True)
+        args.config.write_text(make_def_conf(args.config.resolve()))
 
     _config = benedict(args.config, format='yaml', keypath_separator=None)
     _config.traverse(_standardize_item)
@@ -164,10 +186,14 @@ def main():
     # noinspection PyShadowingNames
     logger = logger.bind(module="MainApp")
 
+    # repeating startup logs after logging on file is initialized
     logger.info('Starting pydashboard')
+    logger.debug("sys.executable: {}", sys.executable)
+    logger.debug("sys.argv: {}", sys.argv)
 
-    main_app = MainApp(config=_config, ansi_color=_config.get('ansi_color', False))
+    main_app = MainApp(config=_config, logger=logger, ansi_color=_config.get('ansi_color', False))
 
+    @logger.catch()
     def reloader(cfg_file, app: MainApp):
         try:
             for changes in watch(cfg_file, stop_event=app.signal):
@@ -179,14 +205,23 @@ def main():
                 logger.debug(changes)
                 app.exit()
 
-                os.execv(sys.executable, ['python'] + sys.argv)
+                argv0 = os.path.abspath(sys.argv[0])
+
+                if argv0.endswith('.py'):
+                    os.execv(sys.executable, [sys.executable, argv0] + sys.argv[1:])
+                else:
+                    os.execv(argv0, [argv0] + sys.argv[1:])
         finally:
             app.exit()
 
-    app_thread = Thread(target=reloader, args=(args.config, main_app), name='AppReloader')
-    app_thread.start()
+    try:
+        app_thread = Thread(target=reloader, args=(args.config, main_app), name='AppReloader')
+        app_thread.start()
 
-    main_app.run()
+        main_app.run()
+    except Exception as e:
+        logger.opt(exception=e).critical(str(e))
+
     logger.info('Exiting')
 
 

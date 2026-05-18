@@ -1,3 +1,4 @@
+import time
 from typing import Any, Callable, Literal, Optional, cast
 
 import rpyc.utils.classic
@@ -19,6 +20,7 @@ class TableModule(BaseModule):
     colorize = None
 
     def __init__(self, *, columns: list[str] = None, show_header:bool=False, sizes:list[int]=None,
+                 column_spacing: int = 1,
                  sort: str | tuple[str, bool] | list[str | tuple[str, bool]] = None, **kwargs: Any):
         """
 
@@ -27,18 +29,21 @@ class TableModule(BaseModule):
             show_header: Set true to show table header.
             sizes: Width (in characters) of each column, 0 fits content. If list is shorted than number
                     of columns, missing column widths will default to 0.
+            column_spacing: Spacing between columns.
             sort: See [Sorting](tablemodule.md#sorting)
             **kwargs: See [BaseModule](basemodule.md)
 
 
         """
-        super().__init__(columns=columns, show_header=show_header, sizes=sizes, sort=sort, **kwargs)
+        super().__init__(columns=columns, show_header=show_header, sizes=sizes, column_spacing=column_spacing,
+                         sort=sort, **kwargs)
         if not columns and sizes:
             raise ValueError("Parameter 'columns' cannot be empty when 'sizes' is not empty")
         self.columns = list(columns) if columns else []
         if sizes is None:
             sizes = []
         self.sizes = list(sizes) + [0] * (len(self.columns) - len(sizes))
+        self.column_spacing = column_spacing
         self.sortby = None
         self.reverse = None
 
@@ -70,29 +75,35 @@ class TableModule(BaseModule):
         pass
 
     def update(self, *args, **kwargs):
-        result = cast(DataFrame, self.call_target(*args, **kwargs))
+        result = self.inject_dependencies(self.call_target, *args, reference_func=self.__call__, **kwargs)
         if self.remote_host:
             # if running over a remote connection copy the dataframe locally
             result = rpyc.utils.classic.obtain(result)
-        self.inner.clear()
-        if result is not None and not result.empty:
-            if not self.columns:
-                self.columns = result.columns.to_list()
-                self.make_header()
+        if result is not None:
+            if not result.empty:
+                if not self.columns:
+                    self.columns = result.columns.to_list()
+                    self.make_header()
 
-            result = _mktable(df=result,
-                              humanize=self.humanize,
-                              justify=self.justify,
-                              colorize=self.colorize,
-                              sortby=self.sortby,
-                              reverse=self.reverse,
-                              select_columns=self.columns)
-            self.inner.add_rows([interleave(r, '') for r in result])
+                #FIXME clearing just before insertion randomly triggers a bug in Textual
+                # `self.inner.clear() needs to be moved down
+                self.inner.clear()
+                result = _mktable(df=result,
+                                  humanize=self.humanize,
+                                  justify=self.justify,
+                                  colorize=self.colorize,
+                                  sortby=self.sortby,
+                                  reverse=self.reverse,
+                                  select_columns=self.columns)
+                result = [interleave(r, '') for r in result]
+                # self.inner.clear() #clear only at last to avoid flickering
+                self.inner.add_rows(result)
+            else:
+                self.inner.clear()
 
     def make_header(self):
         if self.inner.show_header:
-            columns = [Text(self.column_names.get(col, col), justify=self.justify.get(col, "left")) for col in
-                       self.columns]
+            columns = [Text(self.column_names.get(col, col), justify='center') for col in self.columns]
         else:
             columns = [''] * len(self.columns)
 
@@ -103,7 +114,7 @@ class TableModule(BaseModule):
         else:
             sizes = [None] * len(self.columns)
 
-        sizes = interleave(sizes, 1)
+        sizes = interleave(sizes, self.column_spacing)
 
         for col, s in zip(columns, sizes):
             self.inner.add_column(col, width=s)
@@ -135,13 +146,19 @@ def _mktable(df: DataFrame, humanize: dict[str, Callable] = None,
         columns = df.columns.to_list()
 
     if humanize:
-        for col, func in humanize.items():
-            try:
-                # explicitly casting to str to avoid errors in future versions of pandas
-                ### FutureWarning: Setting an item of incompatible dtype is deprecated and will raise in a future error of pandas.
-                df.loc[:, col] = df[col].map(func).astype(str)
-            except KeyError:
-                pass
+        new_df = DataFrame()
+        # for col, func in humanize.items():
+        for col in columns:
+            if col in humanize:
+                try:
+                    # explicitly casting to str to avoid errors in future versions of pandas
+                    ### FutureWarning: Setting an item of incompatible dtype is deprecated and will raise in a future error of pandas.
+                    new_df.loc[:, col] = df[col].map(humanize[col]).astype(str)
+                except KeyError:
+                    pass
+            else:
+                new_df.loc[:, col] = df[col].astype(str)
+        df = new_df
 
     df = df.astype(str)
 

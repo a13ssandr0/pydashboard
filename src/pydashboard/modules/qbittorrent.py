@@ -10,47 +10,50 @@ from pydashboard.utils.units import duration_fmt, perc_fmt, sizeof_fmt, speedof_
 
 states_map = {
     'allocating'        : 'A',
-    'downloading'       : 'D',
     'checkingDL'        : 'CD',
-    'forcedDL'          : 'FD',
-    'metaDL'            : 'MD',
-    'pausedDL'          : 'PD',
-    'queuedDL'          : 'QD',
-    'stalledDL'         : 'SD',
-    'error'             : 'E',
-    'missingFiles'      : 'MF',
-    'uploading'         : 'U',
-    'checkingUP'        : 'CU',
-    'forcedUP'          : 'FU',
-    'pausedUP'          : 'PU',
-    'queuedUP'          : 'QU',
-    'stalledUP'         : 'SU',
-    'queuedChecking'    : 'QC',
     'checkingResumeData': 'CR',
+    'checkingUP'        : 'CU',
+    'downloading'       : 'D',
+    'error'             : 'E',
+    'forcedDL'          : 'FD',
+    'forcedMetaDL'      : 'FM',
+    'forcedUP'          : 'FU',
+    'metaDL'            : 'MD',
+    'missingFiles'      : 'MF',
     'moving'            : 'MV',
+    'pausedDL'          : 'PD',
+    'pausedUP'          : 'PU',
+    'queuedDL'          : 'QD',
+    'queuedUP'          : 'QU',
+    'stalledDL'         : 'SD',
+    'stalledUP'         : 'SU',
+    'stoppedDL'         : 'S',
+    'stoppedUP'         : 'S',
+    'uploading'         : 'U',
     'unknown'           : '?',
 }
 
 colors_map = {
     "A" : "green",
-    "D" : "green",
     "CD": "yellow",
-    "FD": "cyan",
-    "MD": "blue",
-    "PD": "bright_black",
-    "QD": "blue",
-    "SD": "yellow",
-    "E" : "red",
-    "MF": "red",
-    "U" : "green",
-    "CU": "yellow",
-    "FU": "cyan",
-    "PU": "bright_black",
-    "QU": "blue",
-    "SU": "yellow",
-    "QC": "blue",
     "CR": "yellow",
+    "CU": "yellow",
+    "D" : "green",
+    "E" : "red",
+    "FD": "cyan",
+    "FM": "cyan",
+    "FU": "cyan",
+    "MD": "blue",
+    "MF": "red",
     "MV": "green",
+    "PD": "bright_black",
+    "PU": "bright_black",
+    "QD": "blue",
+    "QU": "blue",
+    "SD": "yellow",
+    "SU": "yellow",
+    "S": "blue",
+    "U" : "green",
     "?" : "magenta"
 }
 
@@ -105,51 +108,33 @@ _justify = {
 
 _human = {
     'added_on'          : duration_fmt,
-    'amount_left'       : sizeof_fmt,
-    # 'auto_tmm':           noop,
-    'availability'      : perc_fmt,
-    # 'category':           noop,
-    'completed'         : sizeof_fmt,
+    'amount_left'       : sizeof_fmt(),
+    'availability'      : perc_fmt(100.0),
+    'completed'         : sizeof_fmt(),
     'completion_on'     : time_fmt,
-    # 'content_path':       noop,
-    'dl_limit'          : speedof_fmt,
-    'dlspeed'           : speedof_fmt,
-    'downloaded'        : sizeof_fmt,
-    'downloaded_session': sizeof_fmt,
+    'dl_limit'          : speedof_fmt(),
+    'dlspeed'           : speedof_fmt(),
+    'downloaded'        : sizeof_fmt(),
+    'downloaded_session': sizeof_fmt(),
     'eta'               : duration_fmt,
-    # 'f_l_piece_prio':     noop,
-    # 'force_start':        noop,
-    # 'hash':               noop,
-    # 'isPrivate':          noop,
     'last_activity'     : time_fmt,
-    # 'magnet_uri':         noop,
-    'max_ratio'         : perc_fmt,
+    'max_ratio'         : perc_fmt(100.0),
     'max_seeding_time'  : duration_fmt,
-    # 'name':               noop,
-    # 'num_complete':       noop,
-    # 'num_incomplete':     noop,
-    # 'num_leechs':         noop,
-    # 'num_seeds':          noop,
     'priority'          : noneg,
-    'progress'          : perc_fmt,
-    'ratio'             : perc_fmt,
-    'ratio_limit'       : perc_fmt,
-    # 'save_path':          noop,
+    'progress'          : perc_fmt(100.0),
+    'ratio'             : perc_fmt(100.0),
+    'ratio_limit'       : perc_fmt(100.0),
     'seeding_time'      : duration_fmt,
     'seeding_time_limit': duration_fmt,
     'seen_complete'     : time_fmt,
-    # 'seq_dl':             noop,
-    'size'              : sizeof_fmt,
+    'size'              : sizeof_fmt(),
     'state'             : lambda s: states_map.get(s, '?'),
-    # 'super_seeding':      noop,
-    # 'tags':               noop,
     'time_active'       : duration_fmt,
-    'total_size'        : sizeof_fmt,
-    # 'tracker':            noop,
-    'up_limit'          : speedof_fmt,
-    'uploaded'          : sizeof_fmt,
-    'uploaded_session'  : sizeof_fmt,
-    'upspeed'           : speedof_fmt,
+    'total_size'        : sizeof_fmt(),
+    'up_limit'          : speedof_fmt(),
+    'uploaded'          : sizeof_fmt(),
+    'uploaded_session'  : sizeof_fmt(),
+    'upspeed'           : speedof_fmt(),
 }
 
 
@@ -179,7 +164,7 @@ class QBitTorrent(TableModule):
             human_readable: Convert numbers to human readable strings
             **kwargs: See [TableModule](../containers/tablemodule.md)
 
-        # Available columns:
+        # Available columns
         Source: [qBittorrent WebUI API](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-torrent-list)
 
         Name                 | Description
@@ -240,15 +225,29 @@ class QBitTorrent(TableModule):
         self.port = port
         self.scheme = scheme
         self.humanize = _human if human_readable else None
-        self.referer = f'{scheme}://{host}:{port}'
-        self.url = f'{scheme}://{host}:{port}/api/v2/auth/login'
+        self.referer = f'{scheme}://{host}'
+        if self.scheme == 'http' and self.port == 80:
+            pass
+        elif self.scheme == 'https' and self.port == 443:
+            pass
+        else:
+            self.referer += f':{port}'
+
+        self.url = f'{self.referer}/api/v2/auth/login'
 
     def __post_init__(self):
         self.session = Session()
         try:
-            self.session.post(self.url,
+            auth_result = self.session.post(self.url,
                               data={"username": self.username, "password": self.password},
                               headers={'Referer': self.referer})
+            if auth_result.status_code == 200:
+                self.logger.success("BitTorrent session authorized")
+            else:
+                self.border_subtitle = f'{auth_result.status_code} {auth_result.reason}'
+                self.styles.border_subtitle_color = 'red'
+                self.logger.error('BitTorrent auth error: Request returned status code {} - {}',
+                                  auth_result.status_code, auth_result.reason)
         except ConnectionError as e:
             self.border_subtitle = f'ConnectionError'
             self.styles.border_subtitle_color = 'red'

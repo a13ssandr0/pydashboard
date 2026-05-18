@@ -152,7 +152,7 @@ class Libvirt(BaseModule):
                     cpu = 0
                 else:
                     cpu_delta = new_times[name]['cpu_time'] - self.times[name]['cpu_time']
-                    cpu = cpu_delta / (1e9 * new_times[name]['vcpus'] * self.refresh_interval)
+                    cpu = cpu_delta / (1e9 * new_times[name]['vcpus'] * self.refresh_interval) * 100
 
                 self.times = new_times
 
@@ -162,21 +162,21 @@ class Libvirt(BaseModule):
                 ram = (1 - unused / available) * 100
 
                 if name in memory:
-                    used = sizeof_fmt((available - unused) * 1000.0, div=1000.0)
-                    total = sizeof_fmt(available * 1000.0, div=1000.0)
+                    used = sizeof_fmt()((available - unused) * 1000.0, div=1000.0)
+                    total = sizeof_fmt()(available * 1000.0, div=1000.0)
                     ram_txt = f"{used}/{total}"
                 else:
                     ram_txt = '0B'
 
                 if self.resource_rows == 1:
                     libvirt_info += (
-                            create_bar(ceil(content_size[1] / 2), cpu * 100, perc_fmt(cpu), 'CPU', 'red')
+                            create_bar(ceil(content_size[1] / 2), cpu, perc_fmt()(cpu), 'CPU', 'red')
                             +
                             create_bar(floor(content_size[1] / 2), ram, ram_txt, 'Mem', 'green')
                     )
                 else:
                     libvirt_info += (
-                            create_bar(content_size[1], cpu * 100, perc_fmt(cpu), 'CPU', 'red')
+                            create_bar(content_size[1], cpu, perc_fmt()(cpu), 'CPU', 'red')
                             + "\n" +
                             create_bar(content_size[1], ram, ram_txt, 'Mem', 'green')
                     )

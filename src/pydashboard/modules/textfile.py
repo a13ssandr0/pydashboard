@@ -12,15 +12,12 @@ class TextFile(BaseModule):
             *,
             path: str,
             title: str = None,
-            mode: Literal["plain", "rich", "ansi"] = "plain",
-            style: str = "",
-            emoji: bool = True,
-            emoji_variant: Literal["emoji", "text"] = None,
-            justify: Literal["default", "left", "center", "right", "full"] = None,
-            overflow: Literal["fold", "crop", "ellipsis", "ignore"] = None,
-            no_wrap: bool = None,
-            end: str = "\n",
-            tab_size: int = None,
+            ansi: bool = False,
+            align: Literal["start", "left", "center", "end", "right", "justify"] = "start",
+            opacity: float | str = 1.0,
+            overflow: Literal["clip", "fold", "ellipsis"] = "fold",
+            wrap: bool = True,
+            style: str = "none",
             **kwargs: Any
     ):
         """
@@ -29,84 +26,37 @@ class TextFile(BaseModule):
         Args:
             title: if not set or null defaults to file path
             path: Full path to file to be printed
-            mode: One of "plain", "[rich](https://rich.readthedocs.io/en/stable/markup.html#syntax)" or "[ansi](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)"
+            ansi: Enables "[ANSI](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)" escaped text support (emoji codes are not supported in this mode, only Unicode)
+            align: Text alignment, "start" and "end" will support RTL layouts in the future.
+            opacity: Opacity of the text (0 to 1 o 0% to 100%)
+            overflow: Text overflow mode
+            wrap: Enable word wrapping
             style: [Base style](https://rich.readthedocs.io/en/stable/style.html) for text
-            emoji: Allow rendering emoji codes
-            emoji_variant: Emoji variant, either "text" or "emoji"
-            justify: Justify method: "left", "center", "full", "right"
-            overflow: Overflow method: "crop", "fold", "ellipsis"
-            no_wrap: Disable text wrapping
-            end: Character to end text with
-            tab_size: Number of spaces per tab, or ``None`` to use ``console.tab_size``
             **kwargs: See [BaseModule](../containers/basemodule.md)
-
-
-        Available parameters for each mode:
-
-        Name            | "plain" | "rich" | "ansi"
-        ----------------|---------|--------|--------
-        `style`         |    ✅   |   ✅   |   ✅
-        `emoji`         |    ❌   |   ✅   |   ❌
-        `emoji_variant` |    ❌   |   ✅   |   ❌
-        `justify`       |    ✅   |   ✅   |   ✅
-        `overflow`      |    ✅   |   ✅   |   ✅
-        `no_wrap`       |    ✅   |   ❌   |   ✅
-        `end`           |    ✅   |   ✅   |   ✅
-        `tab_size`      |    ✅   |   ❌   |   ✅
-
-        !!! info
-            Parameters marked with ❌ will be ignored.
         """
         if title is None:
             title = path
 
-        super().__init__(title=title, path=path, mode=mode, style=style, emoji=emoji, emoji_variant=emoji_variant,
-                         justify=justify, overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size, **kwargs)
+        super().__init__(title=title, path=path, ansi=ansi, align=align, opacity=opacity, overflow=overflow, wrap=wrap,
+                         style=style, **kwargs)
         self.path = path
-        self.mode = mode
-        self.style = style
-        self.emoji = emoji
-        self.emoji_variant = emoji_variant
-        self.justify = justify
-        self.overflow = overflow
-        self.no_wrap = no_wrap
-        self.end = end
-        self.tab_size = tab_size
+        self.ansi = ansi
+        self.inner.styles.width = "100%"
+        self.inner.styles.text_align = align
+        self.inner.styles.text_opacity = opacity
+        self.inner.styles.text_overflow = overflow
+        self.inner.styles.text_wrap = "wrap" if wrap else "nowrap"
+        self.inner.styles.text_style = style
 
     def __call__(self):
         with open(self.path) as file:
             text = file.read()
 
-        if self.mode == "rich":
-            text = rich.text.Text.from_markup(
-                    text,
-                    style=self.style,
-                    emoji=self.emoji,
-                    emoji_variant=self.emoji_variant,
-                    justify=self.justify,
-                    overflow=self.overflow,
-                    end=self.end,
-            )
-        elif self.mode == "ansi":
-            text = rich.text.Text.from_ansi(
-                    text,
-                    style=self.style,
-                    justify=self.justify,
-                    overflow=self.overflow,
-                    no_wrap=self.no_wrap,
-                    end=self.end,
-                    tab_size=self.tab_size)
+        if self.ansi:
+            text = rich.text.Text.from_ansi(text)
         else:
-            text = rich.text.Text(
-                    text,
-                    style=self.style,
-                    justify=self.justify,
-                    overflow=self.overflow,
-                    no_wrap=self.no_wrap,
-                    end=self.end,
-                    tab_size=self.tab_size,
-            )
-
+            # needed only to add emoji string support (es: `:red_heart-emoji:`)
+            text = rich.text.Text.from_markup(text, emoji=True)
         return text
 
 
